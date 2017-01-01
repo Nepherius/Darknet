@@ -8,7 +8,11 @@ const Player = rfr('config/models/player.js');
 const MsgQueue = rfr('config/models/message_queue.js');
 
 
+<<<<<<< HEAD
 let validChannels = ['wtb', 'wts', 'lr', 'general'];
+=======
+let validChannels = ['wtb', 'wts', 'lr', 'general', 'pvm'];
+>>>>>>> 77dac4df32480624e96633304108bf88b5d76e10
 
 exports.status = status = function(userId) {
     Player.findOne({

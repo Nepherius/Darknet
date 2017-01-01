@@ -3,7 +3,10 @@ const mongoose = require('mongoose');
 const request = require('request');
 const parseString = require('xml2js').parseString;
 const moment = require('moment');
+<<<<<<< HEAD
 const exec = require('child_process').exec;
+=======
+>>>>>>> 77dac4df32480624e96633304108bf88b5d76e10
 
 
 const Settings = require('../config/models/settings.js');
@@ -20,8 +23,12 @@ const GlobalFn = {
         if (msg) {
             winston.error(msg);
         }
+<<<<<<< HEAD
         exec('killall -9 node'); // kill all child processes, not the best idea...
         process.exit();
+=======
+        process.exitCode = 1;
+>>>>>>> 77dac4df32480624e96633304108bf88b5d76e10
     },
 
     // Send Private Message
