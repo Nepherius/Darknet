@@ -21,10 +21,7 @@ const Chat = require('./config/models/prvGroup.js');
 const Online = require('./config/models/online.js');
 
 
-<<<<<<< HEAD
-=======
 
->>>>>>> 77dac4df32480624e96633304108bf88b5d76e10
 // Import Commands Index & Global Functions
 const Cmd = require('./modules/index.js');
 const GlobalFn = require('./system/globals.js');

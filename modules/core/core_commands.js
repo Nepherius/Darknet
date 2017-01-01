@@ -554,11 +554,7 @@ const coreCmd = {
         });
     },
     shutdown: function(userId) {
-<<<<<<< HEAD
-        GlobalFn.die('Shutting down on user request');
-=======
         die('Shutting down on user request');
->>>>>>> 77dac4df32480624e96633304108bf88b5d76e10
     },
     invite: function(userId, args) {
         let userName = args[0];

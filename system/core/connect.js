@@ -64,9 +64,5 @@ function parseChunk(buf) {
 
 s.on('end', function() {
     winston.info('Socket Closed');
-<<<<<<< HEAD
-    GlobalFn.die();
-=======
     process.exit();
->>>>>>> 77dac4df32480624e96633304108bf88b5d76e10
 });
