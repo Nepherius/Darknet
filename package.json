@@ -1,6 +1,6 @@
 {
     "name": "Darknet",
-    "version": "0.1.7",
+    "version": "0.1.8e",
     "description": "Anarchy Online Mass-Message shopping network",
     "main": "start.js",
     "dependencies": {

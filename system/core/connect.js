@@ -9,6 +9,7 @@ const DEBUG = 0;
 process.on('uncaughtException', function(err) {
     console.log("uncaughtException %s", err);
     console.log(err.stack);
+    GlobalFn.die();
 });
 
 //Connect to server & auth
@@ -37,7 +38,7 @@ s.on('readable', function() {
         remains = Buffer.concat([remains, buf]);
     } catch (e) {
         winston.error(e);
-        process.exit(1);
+        GlobalFn.die();
     }
 
     while (parseChunk(remains));
@@ -64,5 +65,5 @@ function parseChunk(buf) {
 
 s.on('end', function() {
     winston.info('Socket Closed');
-    GlobalFn.die();
+    process.exit();
 });

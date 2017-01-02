@@ -68,7 +68,7 @@ const Prefix = {
     wtb: '[' + '<font color=#00FF00>WTB</font>' + '] ',
     lr: '[' + '<font color=#FF00FF>Lootrights</font>' + '] ',
     general: '[' + '<font color=#FCA712>General</font>' + '] ',
-    pvm: '[' + '<font color=#f2f207>PVM</font>' + '] '
+    pvm: '[' + '<font color=#f0f409>PVM</font>' + '] '
 };
 
 process.on('message', function(Obj) {

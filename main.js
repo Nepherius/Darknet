@@ -4,7 +4,7 @@ const assert = require('assert');
 const util = require('util');
 const events = require('events');
 const Promise = require('bluebird');
-
+const moment = require('moment');
 
 const pack = require('./system/core/pack');
 const auth = require('./system//core/chat-packet');
@@ -152,7 +152,21 @@ handle[auth.AOCP.CLIENT_NAME] = function(data, u) {
     let userId = u.I();
     let userName = u.S();
     u.done();
-    GlobalFn.getPlayerData(userId, userName);
+
+    Player.findOne({
+        '_id': userId
+    }, function(err, result) {
+        if (err) {
+            winston.error(err);
+        } else if (result === null || result === undefined ||
+            moment().subtract(12, 'hours').isAfter(moment(result.lastupdate))) {
+            GlobalFn.getPlayerData(userId, userName);
+        } else {
+            winston.debug('No update for: ' + userId + ' already updated on ' +
+                result.lastupdate);
+        }
+    });
+
 };
 
 handle[auth.AOCP.BUDDY_ADD] = function(data, u) { // handles online/offline status too
@@ -451,8 +465,14 @@ buddyStatus.on('online', function(userId, userStatus) {
         '_id': userId
     }, {
         'lastseen': Date.now()
+    }, function(err) {
+        if (err) {
+            winston.error(err);
+        } else {
+            winston.debug('Updated lastseen of user: ' + userId);
+        }
     });
-    var addOnline = new Online();
+    let addOnline = new Online();
     addOnline._id = userId;
     addOnline.save(function(err) {
         if (err) {

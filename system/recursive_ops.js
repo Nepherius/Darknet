@@ -8,7 +8,8 @@ const mongoConnectionString = "mongodb://localhost/agenda";
 const agenda = new Agenda({
     db: {
         address: mongoConnectionString
-    }
+    },
+    defaultLockLifetime: 120000
 });
 
 agenda.define('broadcast', {

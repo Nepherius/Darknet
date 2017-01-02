@@ -8,7 +8,7 @@ const Player = rfr('config/models/player.js');
 const MsgQueue = rfr('config/models/message_queue.js');
 
 
-let validChannels = ['wtb', 'wts', 'lr', 'general', 'pvm'];
+let validChannels = ['wtb', 'wts', 'lr', 'general'];
 
 exports.status = status = function(userId) {
     Player.findOne({
@@ -87,7 +87,7 @@ exports.general = general = function(userId, args) {
                 }, {
                     'generalLock': moment().add(GlobalFn.generalLockDuration, 'minutes')
                 })]).then(function() {
-                    GlobalFn.PMUser(userId, 'You message has been added to the queue.', 'success');
+                    GlobalFn.PMUser(userId, 'Your message has been added to the queue.', 'success');
                 }).catch(function(err) {
                     winston.error(err);
                 });
@@ -116,7 +116,7 @@ exports.wts = wts = function(userId, args) {
                 }, {
                     'wtsLock': moment().add(GlobalFn.wtsLockDuration, 'minutes')
                 })]).then(function() {
-                    GlobalFn.PMUser(userId, 'You message has been added to the queue.', 'success');
+                    GlobalFn.PMUser(userId, 'Your message has been added to the queue.', 'success');
                 }).catch(function(err) {
                     winston.error(err);
                 });
@@ -145,7 +145,7 @@ exports.wtb = wtb = function(userId, args) {
                 }, {
                     'wtbLock': moment().add(GlobalFn.wtbLockDuration, 'minutes')
                 })]).then(function() {
-                    GlobalFn.PMUser(userId, 'You message has been added to the queue.', 'success');
+                    GlobalFn.PMUser(userId, 'Your message has been added to the queue.', 'success');
                 }).catch(function(err) {
                     winston.error(err);
                 });
@@ -174,7 +174,7 @@ exports.lr = lr = function(userId, args) {
                 }, {
                     'lrLock': moment().add(GlobalFn.lrLockDuration, 'minutes')
                 })]).then(function() {
-                    GlobalFn.PMUser(userId, 'You message has been added to the queue.', 'success');
+                    GlobalFn.PMUser(userId, 'Your message has been added to the queue.', 'success');
                 }).catch(function(err) {
                     winston.error(err);
                 });
@@ -203,7 +203,7 @@ exports.pvm = pvm = function(userId, args) {
                 }, {
                     'pvmLock': moment().add(GlobalFn.pvmLockDuration, 'minutes')
                 })]).then(function() {
-                    GlobalFn.PMUser(userId, 'You message has been added to the queue.', 'success');
+                    GlobalFn.PMUser(userId, 'Your message has been added to the queue.', 'success');
                 }).catch(function(err) {
                     winston.error(err);
                 });

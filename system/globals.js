@@ -3,7 +3,7 @@ const mongoose = require('mongoose');
 const request = require('request');
 const parseString = require('xml2js').parseString;
 const moment = require('moment');
-const exec = require('child_process').exec;
+
 
 const Settings = require('../config/models/settings.js');
 const Login = require('../config/models/login.js');
@@ -19,9 +19,9 @@ const GlobalFn = {
         if (msg) {
             winston.error(msg);
         }
-        exec('killall -9 node'); // kill all child processes, not the best idea$
-        process.exit();
+        process.exitCode = 1;
     },
+
     // Send Private Message
     PMUser: function(userId, message, fontColor) {
         if (!fontColor) {
@@ -69,6 +69,7 @@ const GlobalFn = {
                             ai_level: Number(charStats.defender_rank_id),
                             org: charOrg.name,
                             org_rank: charOrg.rank,
+                            lastupdate: Date.now(),
                             source: 'people.anarchy-online.com'
                         }, {
                             upsert: true,
@@ -122,6 +123,7 @@ const GlobalFn = {
                             ai_level: Number(charStats.defender_rank_id),
                             org: charOrg.name,
                             org_rank: charOrg.rank,
+                            lastupdate: Date.now(),
                             source: 'Rubi-Ka.net'
                         }, {
                             upsert: true,

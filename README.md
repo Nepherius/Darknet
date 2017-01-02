@@ -15,7 +15,7 @@ This app will spawn a lot of sub-processes(replicas) so you should have a server
 
 You'll need to install both Node.js and MongoDB, ideally the latest versions.
 
-You will also need a way to keep the app running 24/7, so you need to use systemd, forever or your prefered method.
+You will also need a way to keep the app running 24/7, so you need to use systemd, forever or your preferred method.
 
 
 ### Installing
@@ -31,16 +31,16 @@ cd Darknet/
 Install the required node modules:
 
 ```
-npm update 
+npm update
 ```
 
-or 
+or
 
 ```
 npm install
 ```
 
-On start the app will create and use ```darknet``` database, if you want to change the name or location of the database open star.js with your prefered editor and edit line 17:
+On start the app will create and use ```darknet``` database, if you want to change the name or location of the database open start.js with your preferred editor and edit line 17:
 
 ```
 mongoose.connect('mongodb://localhost/darknet');
@@ -67,4 +67,3 @@ This project is licensed under the Apache License - see the [LICENSE](LICENSE) f
 ## Acknowledgments
 
 * All the People that worked on the previous Anarchy Online chat bots.
-
