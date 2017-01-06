@@ -8,7 +8,7 @@ const Player = rfr('config/models/player.js');
 const MsgQueue = rfr('config/models/message_queue.js');
 
 
-let validChannels = ['wtb', 'wts', 'lr', 'general','pvm'];
+let validChannels = ['wtb', 'wts', 'lr', 'general', 'pvm'];
 
 exports.status = status = function(userId) {
     Player.findOne({
@@ -30,7 +30,15 @@ exports.status = status = function(userId) {
             statusReply += GlobalFn.PMBlob.apply(this, (result.wtbChannel === false ? [GlobalFn.botname, 'subscribe wtb', 'Subscribe'] : [GlobalFn.botname, 'unsubscribe wtb', 'Unsubscribe'])) + '\n';
             statusReply += '<img src=tdb://id:GFX_GUI_FRIENDLIST_SPLITTER>\n\n';
             statusReply += '<font color=#00FFFF>Lootrights: </font>' + (result.lrChannel === false ? '<font color=#FF0000>No' : '<font color=#00FF00>Yes') + '</font> \n';
-            statusReply += GlobalFn.PMBlob.apply(this, (result.lrChannel === false ? [GlobalFn.botname, 'subscribe lootrights', 'Subscribe'] : [GlobalFn.botname, 'unsubscribe lr', 'Unsubscribe'])) + '\n';
+            statusReply += GlobalFn.PMBlob.apply(this, (result.lrChannel === false ? [GlobalFn.botname, 'subscribe lr', 'Subscribe'] : [GlobalFn.botname, 'unsubscribe lr', 'Unsubscribe'])) + '\n';
+            statusReply += '<img src=tdb://id:GFX_GUI_FRIENDLIST_SPLITTER>\n\n';
+            statusReply += '<font color=#00FFFF>PVM: </font>' + (result.pvmChannel === false ? '<font color=#FF0000>No' : '<font color=#00FF00>Yes') + '</font> \n';
+            statusReply += GlobalFn.PMBlob.apply(this, (result.pvmChannel === false ? [GlobalFn.botname, 'subscribe pvm', 'Subscribe'] : [GlobalFn.botname, 'unsubscribe pvm', 'Unsubscribe'])) + '\n';
+            statusReply += '<img src=tdb://id:GFX_GUI_FRIENDLIST_SPLITTER>\n\n';
+            statusReply += '<font color=#00FFFF>Autoinvite: </font>' + (result.autoinvite === false ? '<font color=#FF0000>No' : '<font color=#00FF00>Yes') + '</font> \n';
+            statusReply += GlobalFn.PMBlob.apply(this, (result.autoinvite === false ? [GlobalFn.botname, 'autoinvite on', 'Turn ON'] : [GlobalFn.botname, 'autoinvite', 'Turn OFF'])) + '\n';
+            statusReply += '<img src=tdb://id:GFX_GUI_FRIENDLIST_SPLITTER>\n\n';
+            statusReply += '<font color=#00FFFF>Warnings: </font>' + result.warnings + '\n';
             statusReply += '<img src=tdb://id:GFX_GUI_FRIENDLIST_SPLITTER>\n\n';
             GlobalFn.PMUser(userId, GlobalFn.blob('Status', statusReply));
         }

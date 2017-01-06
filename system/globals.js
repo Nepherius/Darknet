@@ -40,7 +40,7 @@ const GlobalFn = {
     getPlayerData: function(userId, userName) {
         request('http://people.anarchy-online.com/character/bio/d/5/name/' + userName + '/bio.xml', function(error, response, body) {
             if (!error && response.statusCode == 200) {
-                if (body.length > 10) { // check if xml is empty
+                if (body.length > 20) { // check if xml is empty
                     parseString(body, function(err, result) {
                         let charName = result.character.name[0];
                         let charStats = result.character.basic_stats[0];
@@ -94,7 +94,7 @@ const GlobalFn = {
     backUpGPD: function(userId, userName) {
         request('https://rubi-ka.net/services/characters.asmx/GetAoCharacterXml?name=' + userName, function(error, response, body) {
             if (!error && response.statusCode == 200) {
-                if (body.length > 10) { // check if xml is empty
+                if (body.length > 20) { // check if xml is empty
                     parseString(body, function(err, result) {
                         let charName = result.character.name[0];
                         let charStats = result.character.basic_stats[0];

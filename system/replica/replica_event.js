@@ -7,12 +7,13 @@ const Promise = require('bluebird');
 
 const GlobalFn = require('../globals');
 const MsgQueue = rfr('config/models/message_queue');
-const Online = rfr('config/models/online');
 const Replica = rfr('config/models/replica_login');
 const Player = rfr('config/models/player');
+const Online = rfr('config/models/online');
+const Chat = rfr('config/models/prvGroup');
 
 
-const Obj = {};
+Obj = {};
 
 
 GlobalFn.isReplicaConnected = function() {
@@ -40,11 +41,11 @@ GlobalFn.replicaBuddyList = function(buddyObj) {
     if (buddyObj.buddyAction === 'add') {
         let replicaname; // TODO fix me, thi is a temporary crude operation
         if (buddyObj.count <= 1980) {
-            replicaname = 'darknet1';
+            replicaname = 'Darknet1';
         } else if (buddyObj.count <= 2970) {
-            replicaname = 'darknet2';
+            replicaname = 'Darknet2';
         } else if (buddyObj.count <= 3960) {
-            replicaname = 'darknet3';
+            replicaname = 'Darknet3';
         } else if (buddyObj.count <= 4950) {
             replicaname = 'darknet4';
         } else if (buddyObj.count <= 5940) {
@@ -58,6 +59,7 @@ GlobalFn.replicaBuddyList = function(buddyObj) {
             if (err) {
                 winston.error(err);
             } else {
+              winston.error('Got here');
                 Obj[replicaname].send(buddyObj);
             }
         });
@@ -77,6 +79,16 @@ GlobalFn.replicaBuddyList = function(buddyObj) {
 
     }
 };
+
+
+const Prefix = {
+    wts: '[' + '<font color=#FF0000>WTS</font>' + '] ',
+    wtb: '[' + '<font color=#00FF00>WTB</font>' + '] ',
+    lr: '[' + '<font color=#FF00FF>Lootrights</font>' + '] ',
+    general: '[' + '<font color=#FCA712>General</font>' + '] ',
+    pvm: '[' + '<font color=#f0f409>PVM</font>' + '] '
+};
+
 GlobalFn.retrieveSplitAndBroadcast = function() {
     // Check if there are any messages in the queue
     MsgQueue.findOneAndRemove().then(function(msgObj) {
@@ -92,28 +104,47 @@ GlobalFn.retrieveSplitAndBroadcast = function() {
                     winston.error(err);
                 } else {
                     let online_filtered = online.filter(removeNull);
-                    let playerArray = _.chunk(online_filtered, 5);
 
+                    // Inform user message is being distributed
                     GlobalFn.PMUser(msgObj.userid, 'Your message is being distributed to ' +
                         online_filtered.length + ' players', 'success');
+                    // Send Message to Private Group
+                    send_PRIVGRP_MESSAGE(GlobalFn.botId, Prefix[msgObj.channel] +
+                        '<font color="#f7892a">' + msgObj.message + '</font>' +
+                        ' [<a href="user://' + msgObj.name + '">' + msgObj.name + '</a>]');
 
-                    for (let i = 0, len = playerArray.length; i < len; i++) {
-                        findAvailableReplica(5000).then(function(result) {
-                            let replica = Obj[result.replicaname];
-                            // Check if replica is connected and receiving messages;
-                            if (replica.connected) {
-                                replica.send({
-                                    playerArray: playerArray[i],
-                                    channel: msgObj.channel,
-                                    sender: msgObj.name,
-                                    sender_id: msgObj.userid,
-                                    message: msgObj.message
+                    // Find all player on private group(chat) and remove them from
+                    // receivers list
+                    Chat.find({}, function(err, onChat) {
+                        if (err) {
+                            winston.error(err);
+                        } else {
+                            let online_refiltered = online_filtered.filter(function(e) {
+                                let search = _.find(onChat, function(obj) {
+                                    return obj._id === e._id._id;
                                 });
-                            } else {
-                                i--;
+                                return search === undefined;
+                            });
+                            let playerArray = _.chunk(online_refiltered, 5);
+                            for (let i = 0, len = playerArray.length; i < len; i++) {
+                                findAvailableReplica(5000).then(function(result) {
+                                    let replica = Obj[result.replicaname];
+                                    // Check if replica is connected and receiving messages;
+                                    if (replica.connected) {
+                                        replica.send({
+                                            playerArray: playerArray[i],
+                                            channel: msgObj.channel,
+                                            sender: msgObj.name,
+                                            sender_id: msgObj.userid,
+                                            message: msgObj.message
+                                        });
+                                    } else {
+                                        i--;
+                                    }
+                                });
                             }
-                        });
-                    }
+                        }
+                    });
                 }
             });
         }

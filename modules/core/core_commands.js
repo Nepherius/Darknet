@@ -540,7 +540,7 @@ const coreCmd = {
         addReplica = new Replica();
         addReplica.username = args[0];
         addReplica.password = args[1];
-        addReplica.replicaname = args[2];
+        addReplica.replicaname = _.capitalize(args[2]);
         if (args[3]) {
             addReplica.dimension = args[3];
         }
@@ -554,7 +554,7 @@ const coreCmd = {
         });
     },
     shutdown: function(userId) {
-        die('Shutting down on user request');
+        GlobalFn.die('Shutting down on user request');
     },
     invite: function(userId, args) {
         let userName = args[0];
@@ -610,6 +610,7 @@ const coreCmd = {
                 if (err) {
                     winston.error(err);
                 } else {
+                    GlobalFn.loadSettings();
                     GlobalFn.PMUser(userId, 'Settings successfully updated', 'success');
                 }
             });
@@ -638,7 +639,7 @@ const ValidSettings = {
 };
 
 var about = '<center> <font color=#FFFF00> :::Nephbot - Darknet::: </font> </center> \n\n';
-about += '<font color=#00FFFF>Version:</font> 0.1.8f \n';
+about += '<font color=#00FFFF>Version:</font> 0.1.9 \n';
 about += '<font color=#00FFFF>By:</font> Nepherius \n';
 about += '<font color=#00FFFF>On:</font>' + process.platform + '\n';
 about += '<font color=#00FFFF>In:</font> Node v' + process.versions.node + '\n';
@@ -664,12 +665,21 @@ helpMsg += '<font color=#00FFFF>PVM: </font> pvm <message> to send a message to 
 
 var rules = '<center> <font color=#FFFF00> :::Darknet Rules::: </font> </center> \n\n';
 rules += '<font color=#00FFFF>Do NOT use any channel for chatting, you have PM for that.</font> \n';
-rules += '<font color=#00FFFF>General Channel is for in-game related messages, for kitten videos use PM.</font> \n';
-rules += '<font color=#00FFFF>Personal issues, accusations of players or organizations, profanity and jokes are not allowed ... you have PM for that too!</font> \n';
-rules += '<font color=#00FFFF>Please use the appropriate channel for each message type.</font> \n';
-rules += '<font color=#00FFFF>English ONLY!</font> \n';
-rules += '<font color=#00FFFF>Just use common sense and you will be fine.</font> \n';
-rules += '<font color=#00FFFF>DO NOT USE ALTS TO GET AROUND LOCK TIMERS!</font> \n';
+rules += '<font color=#00FFFF>Personal issues, accusations of players or organizations, profanity and jokes are not allowed!</font> \n';
+rules += '<font color=#00FFFF>The only language allowed is English!</font> \n';
+rules += '<font color=#00FFFF>DO NOT USE ALTS TO GET AROUND LOCK TIMERS!This will result in a ban!</font> \n\n';
+rules += '<font color=#FFC94D> WTB Channel: </font>';
+rules += '<font color=#00FFFF>If you Want to Buy items with YesDrop Flag your message goes here! \nOptionally if you are buying regular items and NoDrop items you can post A SINGLE messages on this channel instead 2 messages, one on wtb channel and one on lr channel.</font> \n';
+rules += '<font color=#FFC94D > WTS Channel: </font>';
+rules += '<font color=#00FFFF>If you Want to Sell items with YesDrop Flag your message goes here!</font> \n';
+rules += '<font color=#FFC94D > Lootrights Channel: </font>';
+rules += '<font color=#00FFFF>If you Want to Buy/Sell items with NoDrop Flag your message goes here!</font> \n';
+rules += '<font color=#FFC94D > PVM Channel: </font>';
+rules += '<font color=#00FFFF>If you want to expand/form a team for that super-hard instance your message goes here!</font> \n';
+rules += '<font color=#FFC94D > General Channel: </font>';
+rules += '<font color=#00FFFF>For any other game related messages that don\'t match the other channels post here!</font> \n';
+rules += '<font color=#FFC94D > Private Group(Chat): </font>';
+rules += '<font color=#00FFFF> This chat only exists to provide an alternative for private messages, it should NOT be used for chatting. DO NOT send any messages on this chat or you WILL be Banned!\n';
 rules += '<font color=#FF0000>All bans are PERMANENT!</font> \n';
 
 

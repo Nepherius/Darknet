@@ -159,7 +159,7 @@ handle[auth.AOCP.CLIENT_NAME] = function(data, u) {
         if (err) {
             winston.error(err);
         } else if (result === null || result === undefined ||
-            moment().subtract(12, 'hours').isAfter(moment(result.lastupdate))) {
+            moment().subtract(48, 'hours').isAfter(moment(result.lastupdate))) {
             GlobalFn.getPlayerData(userId, userName);
         } else {
             winston.debug('No update for: ' + userId + ' already updated on ' +
@@ -404,9 +404,9 @@ global.send_PING = function() {
 
 // Private Messages
 incMessage.on('pm', function(userId, message) {
-    // Continue only if at least 5 seconds passed since login
+    // Continue only if at least 30 seconds passed since login
     // to prevent offline msg spam
-    if (process.hrtime(startTime)[0] > 5) {
+    if (process.hrtime(startTime)[0] > 30) {
         if (!message.match(/Away from keyboard/igm)) { // if message is afk reply stop here
             let cmdName = message.split(' ')[0].toLowerCase();
             Promise.join(
@@ -454,8 +454,42 @@ incMessage.on('pm', function(userId, message) {
 
 // Group Message
 incMessage.on('grp', function(userId, message) {
-    winston.info("[Chat]" + userId + ": " + message);
-
+    send_PRIVGRP_KICK(userId);
+    Player.findOne({
+        '_id': userId
+    }, function(err, result) {
+        if (err) {
+            winston.error(err);
+        } else {
+            if (result.warnings >= GlobalFn.maxWarnings) {
+                Player.update({
+                    '_id': userId
+                }, {
+                    'banned': true
+                }, function(err) {
+                    if (err) {
+                        winston.error(err);
+                    } else {
+                        GlobalFn.PMUser(userId, 'You have been banned!', 'error');
+                    }
+                });
+            } else {
+                Player.update({
+                    '_id': userId
+                }, {
+                    $inc: {
+                        'warnings': 1
+                    }
+                }, function(err) {
+                    if (err) {
+                        winston.error(err);
+                    } else {
+                        GlobalFn.PMUser(userId, 'Chatting on this channel is not allowed and will result in a permanet ban!', 'error');
+                    }
+                });
+            }
+        }
+    });
 
 });
 
@@ -504,7 +538,9 @@ privgrp.on('join', function(userId) {
                 if (err) {
                     winston.error(err);
                 } else {
-                    send_PRIVGRP_MESSAGE(GlobalFn.botId, result._id.name + ' joined the chat');
+                    GlobalFn.PMUser(userId,
+                        'Chatting on this channel is strictly FORBIDDEN, failing to comply will result in a PERMANENT ban!', 'error');
+                    //send_PRIVGRP_MESSAGE(GlobalFn.botId, result._id.name + ' joined the chat');
                 }
             });
         }
@@ -518,7 +554,7 @@ privgrp.on('part', function(userId) {
         if (err) {
             winston.error('Faild to remove user from chat' + err);
         }
-        send_PRIVGRP_MESSAGE(GlobalFn.botId, result._id.name + ' left the chat');
+        //send_PRIVGRP_MESSAGE(GlobalFn.botId, result._id.name + ' left the chat');
     });
 });
 global.Channels = {};

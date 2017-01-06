@@ -51,7 +51,7 @@ let cmdList = [{
     cmdName: 'join',
     description: 'Join guest channel.',
     help: '!join',
-    accessRequired: 2
+    accessRequired: 1
 }, {
     cmdName: 'kick',
     description: 'Kick player from guest channel.',

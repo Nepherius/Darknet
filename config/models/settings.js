@@ -72,6 +72,10 @@ const settingsSchema = mongoose.Schema({
     pvmLockDuration: {
         type: Number,
         default: 25
+    },
+    maxWarnings: {
+      type:Number,
+      default: 3
     }
 }, {
     timestamps: true

@@ -73,10 +73,18 @@ const playerSchema = mongoose.Schema({
     },
     /******* Bot Specific Info *******/
     buddyList: {
-      type: String,
-      default: 'main'
+        type: String,
+        default: 'main'
     },
     banned: {
+        type: Boolean,
+        default: false
+    },
+    warnings: {
+        type: Number,
+        default: 0
+    },
+    autoinvite: {
         type: Boolean,
         default: false
     },
