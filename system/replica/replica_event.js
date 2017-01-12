@@ -7,13 +7,14 @@ const Promise = require('bluebird');
 
 const GlobalFn = require('../globals');
 const MsgQueue = rfr('config/models/message_queue');
+const History = rfr('config/models/history');
 const Replica = rfr('config/models/replica_login');
 const Player = rfr('config/models/player');
 const Online = rfr('config/models/online');
 const Chat = rfr('config/models/prvGroup');
 
 
-Obj = {};
+const Obj = {};
 
 
 GlobalFn.isReplicaConnected = function() {
@@ -59,7 +60,6 @@ GlobalFn.replicaBuddyList = function(buddyObj) {
             if (err) {
                 winston.error(err);
             } else {
-              winston.error('Got here');
                 Obj[replicaname].send(buddyObj);
             }
         });
@@ -130,7 +130,7 @@ GlobalFn.retrieveSplitAndBroadcast = function() {
                                 findAvailableReplica(5000).then(function(result) {
                                     let replica = Obj[result.replicaname];
                                     // Check if replica is connected and receiving messages;
-                                    if (replica.connected) {
+                                    if (replica !== undefined && replica.connected) {
                                         replica.send({
                                             playerArray: playerArray[i],
                                             channel: msgObj.channel,
@@ -145,6 +145,21 @@ GlobalFn.retrieveSplitAndBroadcast = function() {
                             }
                         }
                     });
+
+                    // Add the message details to history.
+                    let addToHistory = new History();
+                    addToHistory.name = msgObj.name;
+                    addToHistory.channel = msgObj.channel;
+                    addToHistory.message = msgObj.message;
+
+                    addToHistory.save(function(err) {
+                      if(err) {
+                        winston.error(err);
+                      } else {
+                        console.log('all good');
+                      }
+                    });
+
                 }
             });
         }

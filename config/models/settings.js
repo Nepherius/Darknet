@@ -55,23 +55,23 @@ const settingsSchema = mongoose.Schema({
     // Message Post Lock Durations
     generalLockDuration: {
         type: Number,
-        default: 25
+        default: 15
     },
     wtsLockDuration: {
         type: Number,
-        default: 25
+        default: 15
     },
     wtbLockDuration: {
         type: Number,
-        default: 25
+        default: 15
     },
     lrLockDuration: {
         type: Number,
-        default: 25
+        default: 10
     },
     pvmLockDuration: {
         type: Number,
-        default: 25
+        default: 15
     },
     maxWarnings: {
       type:Number,

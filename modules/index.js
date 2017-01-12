@@ -110,22 +110,22 @@ let cmdList = [{
 }, {
     cmdName: 'general',
     description: 'Post message to General Channel.',
-    help: 'general <message>',
+    help: 'general < msg >',
     accessRequired: 1
 }, {
     cmdName: 'wts',
     description: 'Post message to WTS Channel.',
-    help: 'wts <message>',
+    help: 'wts < msg >',
     accessRequired: 1
 }, {
     cmdName: 'wtb',
     description: 'Post message to WTB Channel.',
-    help: 'wtb <message>',
+    help: 'wtb < msg >',
     accessRequired: 1
 }, {
     cmdName: 'lr',
     description: 'Post message to Lootrights Channel.',
-    help: 'lr <message>',
+    help: 'lr < msg >',
     accessRequired: 1
 }, {
     cmdName: 'addreplica',
@@ -175,7 +175,24 @@ let cmdList = [{
 }, {
   cmdName: 'pvm',
   description: 'Send a message to PVM channel',
-  help: 'pvm <message>',
+  help: 'pvm < msg >',
+  accessRequired: 1
+},
+{
+  cmdName: 'history',
+  description: 'See broadcast history.',
+  help: 'history [channel name]',
+  accessRequired: 1
+},
+{
+  cmdName: 'autoinvite',
+  description: 'Turn autoinvite on/off.',
+  help: 'autoinvite [on|off]',
+  accessRequired: 1
+},{
+  cmdName: 'stats',
+  description: 'Bot statistics',
+  help: 'stats',
   accessRequired: 1
 }
 ];

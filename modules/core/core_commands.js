@@ -13,6 +13,7 @@ const Online = rfr('config/models/online.js');
 const Player = rfr('config/models/player.js');
 const Replica = rfr('config/models/replica_login.js');
 const MsgQueue = rfr('config/models/message_queue.js');
+const History = rfr('config/models/history');
 const Command = rfr('config/models/commands.js');
 const Settings = rfr('config/models/settings.js');
 
@@ -617,6 +618,101 @@ const coreCmd = {
         } else {
             GlobalFn.PMUser(userId, 'Invalid setting!', 'error');
         }
+    },
+    autoinvite: function(userId, args) {
+        if (!args[0]) {
+            Player.findOne({
+                '_id': userId
+            }, function(err, result) {
+                if (err) {
+                    winston.error(err);
+                } else {
+                    GlobalFn.PMUser(userId, 'Autoinvite is set to: ' + result.autoinvite, 'success');
+                }
+            });
+        } else if (args[0].toLowerCase() === 'on' || args[0].toLowerCase() === 'off') {
+            if (args[0].toLowerCase() === 'on') {
+                Player.update({
+                    '_id': userId
+                }, {
+                    autoinvite: true
+                }, function(err) {
+                    if (err) {
+                        winston.error(err);
+                    } else {
+                        GlobalFn.PMUser(userId, 'Autoinvite successfully updated!');
+                    }
+                });
+            } else {
+                Player.update({
+                    '_id': userId
+                }, {
+                    autoinvite: false
+                }, function(err) {
+                    if (err) {
+                        winston.error(err);
+                    } else {
+                        GlobalFn.PMUser(userId, 'Autoinvite successfully updated!');
+                    }
+                });
+            }
+        } else {
+            GlobalFn.PMUser(userId, 'Invalid setting!', 'error');
+        }
+    },
+    history: function(userId, args) {
+        if (!args[0]) {
+            History
+                .find()
+                .sort({
+                    createdAt: 'descending'
+                })
+                .limit(20)
+                .exec(function(err, result) {
+                    if (err) {
+                        winston.error(err);
+                    } else {
+                        let historyMsg = '<center> <font color=#FFFF00> :::Darknet History::: </font> </center> \n\n';
+                        for (let i = 0, len = result.length; i < len; i++) {
+                            historyMsg += '<font color=#00FFFF>' + _.capitalize(result[i].channel) + ': </font>';
+                            historyMsg += result[i].message + '<font color=#00FFFF> [' +
+                                result[i].name + ']</font> - ' +
+                                moment(result[i].createdAt).fromNow() + '\n';
+                        }
+                        GlobalFn.PMUser(userId, GlobalFn.blob('History', historyMsg));
+                    }
+                });
+        } else if (args[0].toLowerCase() === 'wts' ||
+            args[0].toLowerCase() === 'wtb' ||
+            args[0].toLowerCase() === 'general' ||
+            args[0].toLowerCase() === 'pvm' ||
+            args[0].toLowerCase() === 'lr'
+        ) {
+            History
+                .find({
+                    channel: args[0].toLowerCase()
+                })
+                .sort({
+                    createdAt: 'descending'
+                })
+                .limit(20)
+                .exec(function(err, result) {
+                    if (err) {
+                        winston.error(err);
+                    } else {
+                        let historyMsg = '<center> <font color=#FFFF00> :::Darknet History::: </font> </center> \n\n';
+                        for (let i = 0, len = result.length; i < len; i++) {
+                            historyMsg += '<font color=#00FFFF>' + _.capitalize(result[i].channel) + ': </font>';
+                            historyMsg += result[i].message + '<font color=#00FFFF> [' +
+                                result[i].name + ']</font> - ' +
+                                moment(result[i].createdAt).fromNow() + '\n\n';
+                        }
+                        GlobalFn.PMUser(userId, GlobalFn.blob('History', historyMsg));
+                    }
+                });
+        } else {
+          GlobalFn.PMUser(userId, 'Invalid channel selected.', 'warning');
+        }
     }
 };
 
@@ -631,6 +727,7 @@ const ValidSettings = {
     warnchatcolor: 'warnChatColor',
     errchatcolor: 'errChatColor',
     minlevel: 'minLevel',
+    maxwarnings: 'maxWarnings',
     generallock: 'generalLockDuration',
     wtslock: 'wtsLockDuration',
     wtblock: 'wtbLockDuration',
@@ -639,7 +736,7 @@ const ValidSettings = {
 };
 
 var about = '<center> <font color=#FFFF00> :::Nephbot - Darknet::: </font> </center> \n\n';
-about += '<font color=#00FFFF>Version:</font> 0.1.9 \n';
+about += '<font color=#00FFFF>Version:</font> 0.2.0 \n';
 about += '<font color=#00FFFF>By:</font> Nepherius \n';
 about += '<font color=#00FFFF>On:</font>' + process.platform + '\n';
 about += '<font color=#00FFFF>In:</font> Node v' + process.versions.node + '\n';
@@ -651,17 +748,22 @@ about += '<font color=#00FFFF>Special Thanks:</font> To all the people that work
 
 
 helpMsg = '<center> <font color=#FFFF00> :::General Help::: </font> </center> \n\n';
-helpMsg += '<font color=#00FFFF>Help: </font> You are looking at it.' + '\n';
+helpMsg += '<font color=#00FFFF> [arg] <- This is an optional argument  </font>' + '\n\n';
+helpMsg += '<font color=#00FFFF>Help: </font> help [command name]' + '\n';
 helpMsg += '<font color=#00FFFF>About: </font> General Bot info.' + '\n';
+helpMsg += '<font color=#00FFFF>Join: </font> Join private channel, while on this channel you will no longer receive PM from Darknet.' + '\n';
 helpMsg += '<font color=#00FFFF>Rules: </font> Rules suck but it would be chaos without them.' + '\n';
 helpMsg += '<font color=#00FFFF>Status: </font> Display your channel subscription status.' + '\n';
-helpMsg += '<font color=#00FFFF>Subscribe: </font> subscribe <channel name> to subscribe to a channel' + '\n';
-helpMsg += '<font color=#00FFFF>Unsubscribe: </font> unsubscribe <channel name> to unsubscribe from a channel' + '\n';
-helpMsg += '<font color=#00FFFF>General: </font> general <message> to send a general message.' + '\n';
-helpMsg += '<font color=#00FFFF>LR: </font> lr <message> to send a message to lootrights channel.' + '\n';
-helpMsg += '<font color=#00FFFF>WTS: </font> wts <message> to send a message to Want To Sell channel.' + '\n';
-helpMsg += '<font color=#00FFFF>WTB: </font> wtb <message> to send a message to Want To Buy channel.' + '\n';
-helpMsg += '<font color=#00FFFF>PVM: </font> pvm <message> to send a message to PVM channel.' + '\n';
+helpMsg += '<font color=#00FFFF>Autoinvite: </font> !autoinvite [on|off]' + '\n';
+helpMsg += '<font color=#00FFFF>History: </font> history [channel name] to view last 20 broadcasts.' + '\n';
+helpMsg += '<font color=#00FFFF>Stats: </font> stats to see bot statistics.' + '\n';
+helpMsg += '<font color=#00FFFF>Subscribe: </font> subscribe < channel name|all > to subscribe to a channel' + '\n';
+helpMsg += '<font color=#00FFFF>Unsubscribe: </font> unsubscribe < channel name|all > to unsubscribe from a channel' + '\n';
+helpMsg += '<font color=#00FFFF>General: </font> general < msg > to send a general message.' + '\n';
+helpMsg += '<font color=#00FFFF>LR: </font> lr < msg > to send a message to lootrights channel.' + '\n';
+helpMsg += '<font color=#00FFFF>WTS: </font> wts < msg > to send a message to Want To Sell channel.' + '\n';
+helpMsg += '<font color=#00FFFF>WTB: </font> wtb < msg > to send a message to Want To Buy channel.' + '\n';
+helpMsg += '<font color=#00FFFF>PVM: </font> pvm < msg > to send a message to PVM channel.' + '\n';
 
 var rules = '<center> <font color=#FFFF00> :::Darknet Rules::: </font> </center> \n\n';
 rules += '<font color=#00FFFF>Do NOT use any channel for chatting, you have PM for that.</font> \n';

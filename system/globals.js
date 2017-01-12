@@ -20,7 +20,7 @@ const GlobalFn = {
             winston.error(msg);
         }
         exec('killall -9 node'); // kill all child processes, not the best idea$
-        process.exit();
+        process.exit(1);
     },
 
     // Send Private Message
@@ -42,46 +42,51 @@ const GlobalFn = {
             if (!error && response.statusCode == 200) {
                 if (body.length > 20) { // check if xml is empty
                     parseString(body, function(err, result) {
-                        let charName = result.character.name[0];
-                        let charStats = result.character.basic_stats[0];
-                        let charOrg = {};
-                        if (result.character.organization_membership !== undefined) {
-                            charOrg.name = result.character.organization_membership[0].organization_name;
-                            charOrg.rank = result.character.organization_membership[0].rank;
+                        if (err) {
+                            winston.warn('Error parsing response from AO People: ' + err);
+                            GlobalFn.backUpGPD(userId, userName);
                         } else {
-                            charOrg.name = 'No organization';
-                            charOrg.rank = 'None';
-                        }
-
-                        // Create Or Update Player Database
-                        Player.findOneAndUpdate({
-                            _id: userId
-                        }, {
-                            firstname: charName.firstname,
-                            name: charName.nick,
-                            lastname: charName.lastname,
-                            level: Number(charStats.level),
-                            breed: charStats.breed,
-                            gender: charStats.gender,
-                            faction: charStats.faction,
-                            profession: charStats.profession,
-                            profession_title: charStats.profession_title,
-                            ai_rank: charStats.defender_rank,
-                            ai_level: Number(charStats.defender_rank_id),
-                            org: charOrg.name,
-                            org_rank: charOrg.rank,
-                            lastupdate: Date.now(),
-                            source: 'people.anarchy-online.com'
-                        }, {
-                            upsert: true,
-                            setDefaultsOnInsert: true
-                        }, function(err) {
-                            if (err) {
-                                winston.error(err);
+                            let charName = result.character.name[0];
+                            let charStats = result.character.basic_stats[0];
+                            let charOrg = {};
+                            if (result.character.organization_membership !== undefined) {
+                                charOrg.name = result.character.organization_membership[0].organization_name;
+                                charOrg.rank = result.character.organization_membership[0].rank;
                             } else {
-                                onClientName.emit(userId, charName.name);
+                                charOrg.name = 'No organization';
+                                charOrg.rank = 'None';
                             }
-                        });
+
+                            // Create Or Update Player Database
+                            Player.findOneAndUpdate({
+                                _id: userId
+                            }, {
+                                firstname: charName.firstname,
+                                name: charName.nick,
+                                lastname: charName.lastname,
+                                level: Number(charStats.level),
+                                breed: charStats.breed,
+                                gender: charStats.gender,
+                                faction: charStats.faction,
+                                profession: charStats.profession,
+                                profession_title: charStats.profession_title,
+                                ai_rank: charStats.defender_rank,
+                                ai_level: Number(charStats.defender_rank_id),
+                                org: charOrg.name,
+                                org_rank: charOrg.rank,
+                                lastupdate: Date.now(),
+                                source: 'people.anarchy-online.com'
+                            }, {
+                                upsert: true,
+                                setDefaultsOnInsert: true
+                            }, function(err) {
+                                if (err) {
+                                    winston.error(err);
+                                } else {
+                                    onClientName.emit(userId, charName.name);
+                                }
+                            });
+                        }
                     });
                 }
             }
@@ -165,15 +170,15 @@ const GlobalFn = {
     },
     // Tools
     blob: function(name, content) {
-        return '<a href=\'text://' + content.replace("'", "`") + '\'>' + name + '</a>';
+        return '<a href=\'text://' + content.replace(/\'/gmi, "`") + '\'>' + name + '</a>';
     },
 
     PMBlob: function(user, content, link) {
-        return '<a href=\"chatcmd:///tell ' + user + ' ' + content.replace("'", "`") + '\">' + link + '</a>';
+        return '<a href=\"chatcmd:///tell ' + user + ' ' + content.replace(/\'/gmi, "`") + '\">' + link + '</a>';
     },
 
     itemref: function(lowid, highid, ql, name) {
-        return "<a href=\"itemref://" + lowid + "/" + highid + "/" + ql + "\">" + name.replace("'", "`") + "</a>";
+        return "<a href=\"itemref://" + lowid + "/" + highid + "/" + ql + "\">" + name.replace(/\'/gmi, "`") + "</a>";
     }
 
 };

@@ -406,7 +406,7 @@ global.send_PING = function() {
 incMessage.on('pm', function(userId, message) {
     // Continue only if at least 30 seconds passed since login
     // to prevent offline msg spam
-    if (process.hrtime(startTime)[0] > 30) {
+    if (process.hrtime(startTime)[0] > 30 && userId !== GlobalFn.botId) {
         if (!message.match(/Away from keyboard/igm)) { // if message is afk reply stop here
             let cmdName = message.split(' ')[0].toLowerCase();
             Promise.join(
@@ -454,56 +454,60 @@ incMessage.on('pm', function(userId, message) {
 
 // Group Message
 incMessage.on('grp', function(userId, message) {
-    send_PRIVGRP_KICK(userId);
-    Player.findOne({
-        '_id': userId
-    }, function(err, result) {
-        if (err) {
-            winston.error(err);
-        } else {
-            if (result.warnings >= GlobalFn.maxWarnings) {
-                Player.update({
-                    '_id': userId
-                }, {
-                    'banned': true
-                }, function(err) {
-                    if (err) {
-                        winston.error(err);
-                    } else {
-                        GlobalFn.PMUser(userId, 'You have been banned!', 'error');
-                    }
-                });
+    if (userId !== GlobalFn.botId) {
+        send_PRIVGRP_KICK(userId);
+        Player.findOne({
+            '_id': userId
+        }, function(err, result) {
+            if (err) {
+                winston.error(err);
             } else {
-                Player.update({
-                    '_id': userId
-                }, {
-                    $inc: {
-                        'warnings': 1
-                    }
-                }, function(err) {
-                    if (err) {
-                        winston.error(err);
-                    } else {
-                        GlobalFn.PMUser(userId, 'Chatting on this channel is not allowed and will result in a permanet ban!', 'error');
-                    }
-                });
+                if (result.warnings >= GlobalFn.maxWarnings) {
+                    Player.update({
+                        '_id': userId
+                    }, {
+                        'banned': true
+                    }, function(err) {
+                        if (err) {
+                            winston.error(err);
+                        } else {
+                            GlobalFn.PMUser(userId, 'You have been banned!', 'error');
+                        }
+                    });
+                } else {
+                    Player.update({
+                        '_id': userId
+                    }, {
+                        $inc: {
+                            'warnings': 1
+                        }
+                    }, function(err) {
+                        if (err) {
+                            winston.error(err);
+                        } else {
+                            GlobalFn.PMUser(userId, 'Chatting on this channel is not allowed and will result in a permanet ban!', 'error');
+                        }
+                    });
+                }
             }
-        }
-    });
-
+        });
+    }
 });
 
 // Friend(Buddy) List
 buddyStatus.on('online', function(userId, userStatus) {
-    Player.update({
+    Player.findOneAndUpdate({
         '_id': userId
     }, {
         'lastseen': Date.now()
-    }, function(err) {
+    }, function(err,result) {
         if (err) {
             winston.error(err);
         } else {
             winston.debug('Updated lastseen of user: ' + userId);
+            if (result.autoinvite && result.banned === false) {
+              send_PRIVGRP_INVITE(userId);
+            }
         }
     });
     let addOnline = new Online();
@@ -552,7 +556,7 @@ privgrp.on('part', function(userId) {
         _id: userId
     }).populate('_id').exec(function(err, result) {
         if (err) {
-            winston.error('Faild to remove user from chat' + err);
+            winston.error('Failed to remove user from chat' + err);
         }
         //send_PRIVGRP_MESSAGE(GlobalFn.botId, result._id.name + ' left the chat');
     });
