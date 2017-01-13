@@ -63,6 +63,76 @@ const coreCmd = {
             });
         }
     },
+    cmdlist: function(userId) {
+        Command.find({}, function(err, result) {
+            if (err) {
+                winston.error(err);
+                GlobalFn.PMUser(userId, 'Something went wrong, try again.', 'error');
+            } else {
+                let cmdReply = '<center> <font color=#FFFF00> :::Darknet Command List::: </font> </center> \n\n';
+                for (let i = 0, len = result.length; i < len; i++) {
+                    cmdReply += '<font color=#00FFFF>Cmd name:</font> ' + _.capitalize(result[i].cmdName) + ' \n';
+                    cmdReply += '<font color=#00FFFF>Description:</font> ' + result[i].description + ' \n';
+                    cmdReply += '<font color=#00FFFF>Usage:</font> ' + result[i].help + ' \n';
+                    cmdReply += '<font color=#00FFFF>Access Required:</font> ' + result[i].accessRequired + ' \n';
+                    cmdReply += '<font color=#00FFFF>Status:</font>' +
+                        (result[i].enabled === false ? '<font color=#FF0000>Disabled' : '<font color=#00FF00>Enabled') + '</font>\n\n';
+                }
+                GlobalFn.PMUser(userId, GlobalFn.blob('Command List', cmdReply));
+            }
+        });
+    },
+    stats: function(userId) {
+
+        Promise.join(
+        Player.count({'accessLevel' : {$gte: 1}}),
+        Online.count(),
+        Chat.count(),
+          //$lte: moment().subtract(30, 'days')
+        History.count({createdAt: {$gte: moment().subtract(30, 'days')}}),
+        History.count({'channel' : 'general',
+          createdAt: {$gte: moment().subtract(30, 'days')}}),
+        History.count({'channel' : 'wtb',
+          createdAt: {$gte: moment().subtract(30, 'days')}}),
+        History.count({'channel' : 'wts',
+          createdAt: {$gte: moment().subtract(30, 'days')}}),
+        History.count({'channel' : 'lr',
+          createdAt: {$gte: moment().subtract(30, 'days')}}),
+        History.count({'channel' : 'pvm',
+          createdAt: {$gte: moment().subtract(30, 'days')}}),
+        History.count(),
+        History.count({'channel' : 'general'}),
+        History.count({'channel' : 'wtb'}),
+        History.count({'channel' : 'wts'}),
+        History.count({'channel' : 'lr'}),
+        History.count({'channel' : 'pvm'}),
+        function(members,online, chat, totalBroadcasts, general, wtb, wts, lr, pvm,totalBroadcastsAT, generalAT, wtbAT, wtsAT, lrAT, pvmAT) {
+          let statsReply = '<center> <font color=#FFFF00> :::Darknet Statistics::: </font> </center> \n\n';
+          statsReply += '<font color=#00FFFF>Total Members:</font>' + members + '\n';
+          statsReply += '<font color=#00FFFF>Online Members:</font>' + online + '\n';
+          statsReply += '<font color=#00FFFF>Members in Private Chat:</font>' + chat + '\n';
+          statsReply += '<img src=tdb://id:GFX_GUI_FRIENDLIST_SPLITTER>\n\n';
+          statsReply += '<font color=#00FFFF>Total Broadcasts Last 30 days:</font>' + totalBroadcasts + '\n';
+          statsReply += '<font color=#00FFFF>General:</font>' + general + '\n';
+          statsReply += '<font color=#00FFFF>WTB:</font>' + wtb + '\n';
+          statsReply += '<font color=#00FFFF>WTS:</font>' + wts + '\n';
+          statsReply += '<font color=#00FFFF>Lootrights:</font>' + lr + '\n';
+          statsReply += '<font color=#00FFFF>Pvm:</font>' + pvm + '\n';
+          statsReply += '<img src=tdb://id:GFX_GUI_FRIENDLIST_SPLITTER>\n\n';
+          statsReply += '<font color=#00FFFF>Total Broadcasts All Time:</font>' + totalBroadcastsAT + '\n';
+          statsReply += '<font color=#00FFFF>General:</font>' + generalAT + '\n';
+          statsReply += '<font color=#00FFFF>WTB:</font>' + wtbAT + '\n';
+          statsReply += '<font color=#00FFFF>WTS:</font>' + wtsAT + '\n';
+          statsReply += '<font color=#00FFFF>Lootrights:</font>' + lr + '\n';
+          statsReply += '<font color=#00FFFF>Pvm:</font>' + pvmAT + '\n';
+          statsReply += '<img src=tdb://id:GFX_GUI_FRIENDLIST_SPLITTER>\n\n';
+          statsReply += '<font color=#00FFFF>Uptime:</font> ' +
+              moment.duration(process.uptime(), 'seconds').humanize() + ' \n';
+          GlobalFn.PMUser(userId, GlobalFn.blob('Darknet Stats', statsReply));
+        }).catch(function(err) {
+            winston.error('Statistics retrieval error: ' + err);
+        });
+    },
     ban: function(userId, args) {
         if (!args[0]) {
             GlobalFn.PMUser(userId, 'Invalid request, check !help ban', 'warning');
@@ -194,7 +264,7 @@ const coreCmd = {
                                 } else {
                                     Player.count({
                                         'accessLevel': {
-                                            $gte: 1
+                                            $: 1
                                         },
                                         'buddyList': 'main'
                                     }, function(err, result) {
@@ -678,6 +748,7 @@ const coreCmd = {
                             historyMsg += result[i].message + '<font color=#00FFFF> [' +
                                 result[i].name + ']</font> - ' +
                                 moment(result[i].createdAt).fromNow() + '\n';
+                                historyMsg += '<img src=tdb://id:GFX_GUI_FRIENDLIST_SPLITTER>\n\n';
                         }
                         GlobalFn.PMUser(userId, GlobalFn.blob('History', historyMsg));
                     }
@@ -706,12 +777,13 @@ const coreCmd = {
                             historyMsg += result[i].message + '<font color=#00FFFF> [' +
                                 result[i].name + ']</font> - ' +
                                 moment(result[i].createdAt).fromNow() + '\n\n';
+                            historyMsg += '<img src=tdb://id:GFX_GUI_FRIENDLIST_SPLITTER>\n\n';
                         }
                         GlobalFn.PMUser(userId, GlobalFn.blob('History', historyMsg));
                     }
                 });
         } else {
-          GlobalFn.PMUser(userId, 'Invalid channel selected.', 'warning');
+            GlobalFn.PMUser(userId, 'Invalid channel selected.', 'warning');
         }
     }
 };
@@ -736,7 +808,7 @@ const ValidSettings = {
 };
 
 var about = '<center> <font color=#FFFF00> :::Nephbot - Darknet::: </font> </center> \n\n';
-about += '<font color=#00FFFF>Version:</font> 0.2.0 \n';
+about += '<font color=#00FFFF>Version:</font> 0.2.1 \n';
 about += '<font color=#00FFFF>By:</font> Nepherius \n';
 about += '<font color=#00FFFF>On:</font>' + process.platform + '\n';
 about += '<font color=#00FFFF>In:</font> Node v' + process.versions.node + '\n';
@@ -749,21 +821,22 @@ about += '<font color=#00FFFF>Special Thanks:</font> To all the people that work
 
 helpMsg = '<center> <font color=#FFFF00> :::General Help::: </font> </center> \n\n';
 helpMsg += '<font color=#00FFFF> [arg] <- This is an optional argument  </font>' + '\n\n';
-helpMsg += '<font color=#00FFFF>Help: </font> help [command name]' + '\n';
-helpMsg += '<font color=#00FFFF>About: </font> General Bot info.' + '\n';
-helpMsg += '<font color=#00FFFF>Join: </font> Join private channel, while on this channel you will no longer receive PM from Darknet.' + '\n';
-helpMsg += '<font color=#00FFFF>Rules: </font> Rules suck but it would be chaos without them.' + '\n';
-helpMsg += '<font color=#00FFFF>Status: </font> Display your channel subscription status.' + '\n';
-helpMsg += '<font color=#00FFFF>Autoinvite: </font> !autoinvite [on|off]' + '\n';
-helpMsg += '<font color=#00FFFF>History: </font> history [channel name] to view last 20 broadcasts.' + '\n';
-helpMsg += '<font color=#00FFFF>Stats: </font> stats to see bot statistics.' + '\n';
-helpMsg += '<font color=#00FFFF>Subscribe: </font> subscribe < channel name|all > to subscribe to a channel' + '\n';
-helpMsg += '<font color=#00FFFF>Unsubscribe: </font> unsubscribe < channel name|all > to unsubscribe from a channel' + '\n';
-helpMsg += '<font color=#00FFFF>General: </font> general < msg > to send a general message.' + '\n';
-helpMsg += '<font color=#00FFFF>LR: </font> lr < msg > to send a message to lootrights channel.' + '\n';
-helpMsg += '<font color=#00FFFF>WTS: </font> wts < msg > to send a message to Want To Sell channel.' + '\n';
-helpMsg += '<font color=#00FFFF>WTB: </font> wtb < msg > to send a message to Want To Buy channel.' + '\n';
-helpMsg += '<font color=#00FFFF>PVM: </font> pvm < msg > to send a message to PVM channel.' + '\n';
+helpMsg += '<font color=#00FFFF>help [command name]</font> - Display general help or for a specific command.' + '\n';
+helpMsg += '<font color=#00FFFF>about </font> - General Bot info.' + '\n';
+helpMsg += '<font color=#00FFFF>cmdlist </font> - List all commands.' + '\n';
+helpMsg += '<font color=#00FFFF>join </font> - Join private channel, while on this channel you will no longer receive PM from Darknet.' + '\n';
+helpMsg += '<font color=#00FFFF>rules </font> - List Darknet rules.' + '\n';
+helpMsg += '<font color=#00FFFF>status </font> - Display your channel subscription status.' + '\n';
+helpMsg += '<font color=#00FFFF>autoinvite [on|off]</font> - See your current autoinvite status or turn on/off.' + '\n';
+helpMsg += '<font color=#00FFFF>history [channel name]</font> - List last 20 broadcasts, optionally for a specific channel.' + '\n';
+helpMsg += '<font color=#00FFFF>stats </font> - Display Darknet statistics.' + '\n';
+helpMsg += '<font color=#00FFFF>subscribe < channel name|all > </font> - Subscribe to a channel or all.' + '\n';
+helpMsg += '<font color=#00FFFF>unsubscribe < channel name|all > </font> - Unsubscribe from a channel or all.' + '\n';
+helpMsg += '<font color=#00FFFF>general < msg > </font> - Send a general message.' + '\n';
+helpMsg += '<font color=#00FFFF>lr < msg > </font> - Send a message to lootrights channel.' + '\n';
+helpMsg += '<font color=#00FFFF>wts < msg > </font> - Send a message to Want To Sell channel.' + '\n';
+helpMsg += '<font color=#00FFFF>wtb < msg > </font> - Send a message to Want To Buy channel.' + '\n';
+helpMsg += '<font color=#00FFFF>pvm < msg > </font> - Send a message to PVM channel.' + '\n';
 
 var rules = '<center> <font color=#FFFF00> :::Darknet Rules::: </font> </center> \n\n';
 rules += '<font color=#00FFFF>Do NOT use any channel for chatting, you have PM for that.</font> \n';

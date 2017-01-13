@@ -35,53 +35,53 @@ let cmdList = [{
     help: 'about',
 }, {
     cmdName: 'rules',
-    description: 'Darknet usage rules',
-    help: '!rules',
+    description: 'Darknet rules.',
+    help: 'rules',
 }, {
     cmdName: 'shutdown',
     description: 'Shutdown bot.',
-    help: '!shutdown',
-    accessRequired: 3
+    help: 'shutdown',
+    accessRequired: 99
 }, {
     cmdName: 'invite',
     description: 'Invite player to guest channel.',
-    help: '!invite [player name]',
+    help: 'invite [player name]',
     accessRequired: 2
 }, {
     cmdName: 'join',
     description: 'Join guest channel.',
-    help: '!join',
+    help: 'join',
     accessRequired: 1
 }, {
     cmdName: 'kick',
     description: 'Kick player from guest channel.',
-    help: '!kick [player name]',
+    help: 'kick [player name]',
     accessRequired: 2
 }, {
     cmdName: 'leave',
     description: 'Leave guest channel.',
-    help: '!leave',
+    help: 'leave',
     accessRequired: 0
 }, {
     cmdName: 'addadmin',
     description: 'Add a new bot admin.',
-    help: '!addadmin <player name>',
-    accessRequired: 3
+    help: 'addadmin <player name>',
+    accessRequired: 99
 }, {
     cmdName: 'addmember',
     description: 'Add a new member.',
-    help: '!addmember <player name>',
+    help: 'addmember <player name>',
     accessRequired: 2
 }, {
     cmdName: 'remadmin',
     description: 'Demotes an admin to member.',
-    help: '!remadmin <player name>',
-    accessRequired: 3
+    help: 'remadmin <player name>',
+    accessRequired: 99
 }, {
     cmdName: 'remmember',
-    description: 'Warning!Removes all access, even if player is an admin!',
-    help: '!deladmin <player name>',
-    accessRequired: 3
+    description: 'Warning!Removes all access, even if player is an admin.',
+    help: 'remmember <player name>',
+    accessRequired: 2
 }, {
     cmdName: 'register',
     description: 'Register as a member.',
@@ -89,18 +89,18 @@ let cmdList = [{
     accessRequired: 0
 }, {
     cmdName: 'unregister',
-    description: 'Warning!Removes all access, even if player is an admin!',
+    description: 'Warning!Removes all access, even if player is an admin.',
     help: 'unregister',
     accessRequired: 1
 }, {
     cmdName: 'subscribe',
     description: 'Subscribe to shopping channels.',
-    help: 'subscribe <channel name> or all ',
+    help: 'subscribe <channel name|all>',
     accessRequired: 1
 }, {
     cmdName: 'unsubscribe',
     description: 'Unsubscribe from shopping channels.',
-    help: 'unsubscribe <channel name> or all>',
+    help: 'unsubscribe <channel name|all>',
     accessRequired: 1
 }, {
     cmdName: 'status',
@@ -128,6 +128,11 @@ let cmdList = [{
     help: 'lr < msg >',
     accessRequired: 1
 }, {
+    cmdName: 'pvm',
+    description: 'Send a message to PVM channel',
+    help: 'pvm < msg >',
+    accessRequired: 1
+}, {
     cmdName: 'addreplica',
     description: 'Add a new replica.',
     help: 'addreplica <user pass botname [dimension]>',
@@ -141,11 +146,11 @@ let cmdList = [{
     cmdName: 'unban',
     description: 'Unban player.',
     help: 'unban <player name>',
-    accessRequired: 3
+    accessRequired: 99
 }, {
     cmdName: 'test',
     description: 'For testing purposes only!',
-    help: 'Unknown',
+    help: 'Unknown.',
     accessRequired: 99
 }, {
     cmdName: 'lock',
@@ -159,8 +164,8 @@ let cmdList = [{
     accessRequired: 2
 }, {
     cmdName: 'help',
-    description: 'Help...',
-    help: 'help',
+    description: 'Display general help or help for a specified command.',
+    help: 'help [command name]',
     accessRequired: 0
 }, {
     cmdName: 'replicastatus',
@@ -168,38 +173,36 @@ let cmdList = [{
     help: 'replicastatus',
     accessRequired: 2
 }, {
-  cmdName: 'set',
-  description: 'Update settings.',
-  help: 'set <setting name> <argument>',
-  accessRequired: 99
+    cmdName: 'set',
+    description: 'Update settings.',
+    help: 'set <setting name> <argument>',
+    accessRequired: 99
 }, {
-  cmdName: 'pvm',
-  description: 'Send a message to PVM channel',
-  help: 'pvm < msg >',
-  accessRequired: 1
-},
-{
-  cmdName: 'history',
-  description: 'See broadcast history.',
-  help: 'history [channel name]',
-  accessRequired: 1
-},
-{
-  cmdName: 'autoinvite',
-  description: 'Turn autoinvite on/off.',
-  help: 'autoinvite [on|off]',
-  accessRequired: 1
-},{
-  cmdName: 'stats',
-  description: 'Bot statistics',
-  help: 'stats',
-  accessRequired: 1
-}
-];
+    cmdName: 'history',
+    description: 'See broadcast history.',
+    help: 'history [channel name]',
+    accessRequired: 1
+}, {
+    cmdName: 'autoinvite',
+    description: 'Turn autoinvite on/off.',
+    help: 'autoinvite [on|off]',
+    accessRequired: 1
+}, {
+    cmdName: 'stats',
+    description: 'Bot statistics',
+    help: 'stats',
+    accessRequired: 1
+}, {
+    cmdName: 'cmdlist',
+    description: 'List all commands.',
+    help: 'cmdlist',
+    accessRequired: 1
+}];
 
 
-// At the moment mongoose has no support continue on error
-// so the database needs to be cleared manually if new commands are added
+// At the moment mongoose has no support for continue on error while using
+// Model.insertMany so the database needs to be cleared manually if new commands
+// are added.
 Command.insertMany(cmdList, function(err) {
     if (err) {
         winston.debug(err);
