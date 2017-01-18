@@ -276,7 +276,7 @@ global.send_ONLINE_SET = function(arg) {
 };
 
 global.send_BUDDY_ADD = function(userId) {
-    winston.info('BUDDY_ADD_id %d', userId);
+    winston.info('%s -> BUDDY_ADD_id %d', process.argv[2],userId);
     send(
         auth.AOCP.BUDDY_ADD, [
             ['I', userId],
@@ -285,7 +285,7 @@ global.send_BUDDY_ADD = function(userId) {
 };
 
 global.send_BUDDY_REMOVE = function(userId) {
-    winston.info('BUDDY_REMOVE_id %d', userId);
+    winston.info('%s -> BUDDY_REMOVE_id %d', process.argv[2],userId);
     send(
         auth.AOCP.BUDDY_REMOVE, [
             ['I', userId]

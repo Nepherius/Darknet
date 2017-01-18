@@ -85,51 +85,98 @@ const coreCmd = {
     stats: function(userId) {
 
         Promise.join(
-        Player.count({'accessLevel' : {$gte: 1}}),
-        Online.count(),
-        Chat.count(),
-          //$lte: moment().subtract(30, 'days')
-        History.count({createdAt: {$gte: moment().subtract(30, 'days')}}),
-        History.count({'channel' : 'general',
-          createdAt: {$gte: moment().subtract(30, 'days')}}),
-        History.count({'channel' : 'wtb',
-          createdAt: {$gte: moment().subtract(30, 'days')}}),
-        History.count({'channel' : 'wts',
-          createdAt: {$gte: moment().subtract(30, 'days')}}),
-        History.count({'channel' : 'lr',
-          createdAt: {$gte: moment().subtract(30, 'days')}}),
-        History.count({'channel' : 'pvm',
-          createdAt: {$gte: moment().subtract(30, 'days')}}),
-        History.count(),
-        History.count({'channel' : 'general'}),
-        History.count({'channel' : 'wtb'}),
-        History.count({'channel' : 'wts'}),
-        History.count({'channel' : 'lr'}),
-        History.count({'channel' : 'pvm'}),
-        function(members,online, chat, totalBroadcasts, general, wtb, wts, lr, pvm,totalBroadcastsAT, generalAT, wtbAT, wtsAT, lrAT, pvmAT) {
-          let statsReply = '<center> <font color=#FFFF00> :::Darknet Statistics::: </font> </center> \n\n';
-          statsReply += '<font color=#00FFFF>Total Members:</font>' + members + '\n';
-          statsReply += '<font color=#00FFFF>Online Members:</font>' + online + '\n';
-          statsReply += '<font color=#00FFFF>Members in Private Chat:</font>' + chat + '\n';
-          statsReply += '<img src=tdb://id:GFX_GUI_FRIENDLIST_SPLITTER>\n\n';
-          statsReply += '<font color=#00FFFF>Total Broadcasts Last 30 days:</font>' + totalBroadcasts + '\n';
-          statsReply += '<font color=#00FFFF>General:</font>' + general + '\n';
-          statsReply += '<font color=#00FFFF>WTB:</font>' + wtb + '\n';
-          statsReply += '<font color=#00FFFF>WTS:</font>' + wts + '\n';
-          statsReply += '<font color=#00FFFF>Lootrights:</font>' + lr + '\n';
-          statsReply += '<font color=#00FFFF>Pvm:</font>' + pvm + '\n';
-          statsReply += '<img src=tdb://id:GFX_GUI_FRIENDLIST_SPLITTER>\n\n';
-          statsReply += '<font color=#00FFFF>Total Broadcasts All Time:</font>' + totalBroadcastsAT + '\n';
-          statsReply += '<font color=#00FFFF>General:</font>' + generalAT + '\n';
-          statsReply += '<font color=#00FFFF>WTB:</font>' + wtbAT + '\n';
-          statsReply += '<font color=#00FFFF>WTS:</font>' + wtsAT + '\n';
-          statsReply += '<font color=#00FFFF>Lootrights:</font>' + lr + '\n';
-          statsReply += '<font color=#00FFFF>Pvm:</font>' + pvmAT + '\n';
-          statsReply += '<img src=tdb://id:GFX_GUI_FRIENDLIST_SPLITTER>\n\n';
-          statsReply += '<font color=#00FFFF>Uptime:</font> ' +
-              moment.duration(process.uptime(), 'seconds').humanize() + ' \n';
-          GlobalFn.PMUser(userId, GlobalFn.blob('Darknet Stats', statsReply));
-        }).catch(function(err) {
+            Player.count({
+                'accessLevel': {
+                    $gte: 1
+                }
+            }),
+            Online.count(),
+            Chat.count(),
+            //$lte: moment().subtract(30, 'days')
+            History.count({
+                createdAt: {
+                    $gte: moment().subtract(30, 'days')
+                }
+            }),
+            History.count({
+                'channel': 'general',
+                createdAt: {
+                    $gte: moment().subtract(30, 'days')
+                }
+            }),
+            History.count({
+                'channel': 'wtb',
+                createdAt: {
+                    $gte: moment().subtract(30, 'days')
+                }
+            }),
+            History.count({
+                'channel': 'wts',
+                createdAt: {
+                    $gte: moment().subtract(30, 'days')
+                }
+            }),
+            History.count({
+                'channel': 'lr',
+                createdAt: {
+                    $gte: moment().subtract(30, 'days')
+                }
+            }),
+            History.count({
+                'channel': 'pvm',
+                createdAt: {
+                    $gte: moment().subtract(30, 'days')
+                }
+            }),
+            History.count(),
+            History.count({
+                'channel': 'general'
+            }),
+            History.count({
+                'channel': 'wtb'
+            }),
+            History.count({
+                'channel': 'wts'
+            }),
+            History.count({
+                'channel': 'lr'
+            }),
+            History.count({
+                'channel': 'pvm'
+            }),
+            Player.count({
+                'banned': true
+            }),
+            function(members, online, chat, totalBroadcasts, general, wtb, wts, lr, pvm, totalBroadcastsAT, generalAT, wtbAT, wtsAT, lrAT, pvmAT, banned) {
+                let statsReply = '<center> <font color=#FFFF00> :::Darknet Statistics::: </font> </center> \n\n';
+                statsReply += '<img src=tdb://id:GFX_GUI_FRIENDLIST_SPLITTER>\n';
+                statsReply += '<font color=#00FFFF>Total Members:</font>' + members + '\n';
+                statsReply += '<font color=#00FFFF>Online Members:</font>' + online + '\n';
+                statsReply += '<font color=#00FFFF>Members in Private Chat:</font>' + chat + '\n';
+                statsReply += '<font color=#00FFFF>Banned:</font>' + banned + '\n';
+                statsReply += '<img src=tdb://id:GFX_GUI_FRIENDLIST_SPLITTER>\n\n';
+                statsReply += '<img src=tdb://id:GFX_GUI_FRIENDLIST_SPLITTER>\n';
+                statsReply += '<font color=#00FFFF>Total Broadcasts Last 30 days:</font>' + totalBroadcasts + '\n';
+                statsReply += '<font color=#00FFFF>General:</font>' + general + '\n';
+                statsReply += '<font color=#00FFFF>WTB:</font>' + wtb + '\n';
+                statsReply += '<font color=#00FFFF>WTS:</font>' + wts + '\n';
+                statsReply += '<font color=#00FFFF>Lootrights:</font>' + lr + '\n';
+                statsReply += '<font color=#00FFFF>Pvm:</font>' + pvm + '\n';
+                statsReply += '<img src=tdb://id:GFX_GUI_FRIENDLIST_SPLITTER>\n\n';
+                statsReply += '<img src=tdb://id:GFX_GUI_FRIENDLIST_SPLITTER>\n';
+                statsReply += '<font color=#00FFFF>Total Broadcasts All Time:</font>' + totalBroadcastsAT + '\n';
+                statsReply += '<font color=#00FFFF>General:</font>' + generalAT + '\n';
+                statsReply += '<font color=#00FFFF>WTB:</font>' + wtbAT + '\n';
+                statsReply += '<font color=#00FFFF>WTS:</font>' + wtsAT + '\n';
+                statsReply += '<font color=#00FFFF>Lootrights:</font>' + lr + '\n';
+                statsReply += '<font color=#00FFFF>Pvm:</font>' + pvmAT + '\n';
+                statsReply += '<img src=tdb://id:GFX_GUI_FRIENDLIST_SPLITTER>\n\n';
+                statsReply += '<img src=tdb://id:GFX_GUI_FRIENDLIST_SPLITTER>\n';
+                statsReply += '<font color=#00FFFF>Uptime:</font> ' +
+                    moment.duration(process.uptime(), 'seconds').humanize() + ' \n';
+                statsReply += '<img src=tdb://id:GFX_GUI_FRIENDLIST_SPLITTER>';
+                GlobalFn.PMUser(userId, GlobalFn.blob('Darknet Stats', statsReply));
+            }).catch(function(err) {
             winston.error('Statistics retrieval error: ' + err);
         });
     },
@@ -264,7 +311,7 @@ const coreCmd = {
                                 } else {
                                     Player.count({
                                         'accessLevel': {
-                                            $: 1
+                                            $gte: 1
                                         },
                                         'buddyList': 'main'
                                     }, function(err, result) {
@@ -748,7 +795,7 @@ const coreCmd = {
                             historyMsg += result[i].message + '<font color=#00FFFF> [' +
                                 result[i].name + ']</font> - ' +
                                 moment(result[i].createdAt).fromNow() + '\n';
-                                historyMsg += '<img src=tdb://id:GFX_GUI_FRIENDLIST_SPLITTER>\n\n';
+                            historyMsg += '<img src=tdb://id:GFX_GUI_FRIENDLIST_SPLITTER>\n\n';
                         }
                         GlobalFn.PMUser(userId, GlobalFn.blob('History', historyMsg));
                     }
@@ -785,6 +832,22 @@ const coreCmd = {
         } else {
             GlobalFn.PMUser(userId, 'Invalid channel selected.', 'warning');
         }
+    },
+    replicastatus: function(userId) {
+        Replica.find({}, function(err, result) {
+            let repStatus = '<center> <font color=#FFFF00> :::Darknet Replicas Status::: </font> </center> \n\n';
+            for (let i = 0, len = result.length; i < len; i++) {
+                repStatus += '<img src=tdb://id:GFX_GUI_FRIENDLIST_SPLITTER>\n';
+                repStatus += '<font color=#00FFFF>Name: </font>' + result[i].replicaname + '\n';
+                if (result[i].ready) {
+                    repStatus += '<font color=#00FFFF>Busy: </font> <font color=#00FF00>No </font>\n';
+                } else {
+                    repStatus += '<font color=#00FFFF>Busy: </font> <font color=#FF0000>Yes </font>\n';
+                }
+                repStatus += '<img src=tdb://id:GFX_GUI_FRIENDLIST_SPLITTER>\n\n';
+            }
+            GlobalFn.PMUser(userId, GlobalFn.blob('Replicas Status', repStatus));
+        });
     }
 };
 
@@ -808,7 +871,7 @@ const ValidSettings = {
 };
 
 var about = '<center> <font color=#FFFF00> :::Nephbot - Darknet::: </font> </center> \n\n';
-about += '<font color=#00FFFF>Version:</font> 0.2.1 \n';
+about += '<font color=#00FFFF>Version:</font> 0.2.2 \n';
 about += '<font color=#00FFFF>By:</font> Nepherius \n';
 about += '<font color=#00FFFF>On:</font>' + process.platform + '\n';
 about += '<font color=#00FFFF>In:</font> Node v' + process.versions.node + '\n';

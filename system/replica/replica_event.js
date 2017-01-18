@@ -13,8 +13,8 @@ const Player = rfr('config/models/player');
 const Online = rfr('config/models/online');
 const Chat = rfr('config/models/prvGroup');
 
-
-const Obj = {};
+// This will hold all the replica names
+const ReplicaList = {};
 
 
 GlobalFn.isReplicaConnected = function() {
@@ -24,10 +24,10 @@ GlobalFn.isReplicaConnected = function() {
         } else if (result !== null) {
             for (let i = 0, len = result.length; i < len; i++) {
                 setTimeout(function() {
-                    if (Obj[result[i].replicaname] === undefined ||
-                        !Obj[result[i].replicaname].connected) {
+                    if (ReplicaList[result[i].replicaname] === undefined ||
+                        !ReplicaList[result[i].replicaname].connected) {
                         try {
-                            Obj[result[i].replicaname] = fork('system/replica/replica_main.js', [result[i].replicaname]);
+                            ReplicaList[result[i].replicaname] = fork('system/replica/replica_main.js', [result[i].replicaname]);
                         } catch (err) {
                             winston.error(err);
                         }
@@ -40,17 +40,14 @@ GlobalFn.isReplicaConnected = function() {
 
 GlobalFn.replicaBuddyList = function(buddyObj) {
     if (buddyObj.buddyAction === 'add') {
-        let replicaname; // TODO fix me, thi is a temporary crude operation
-        if (buddyObj.count <= 1980) {
-            replicaname = 'Darknet1';
-        } else if (buddyObj.count <= 2970) {
-            replicaname = 'Darknet2';
-        } else if (buddyObj.count <= 3960) {
-            replicaname = 'Darknet3';
-        } else if (buddyObj.count <= 4950) {
-            replicaname = 'darknet4';
-        } else if (buddyObj.count <= 5940) {
-            replicaname = 'darknet5';
+        let replicaname;
+        replicaArr = _.keys(ReplicaList);
+        for (let i = 0, len = replicaArr.length;i<len;i++) {
+          if (buddyObj.count <= (i + 2) * 990) {
+            replicaname = replicaArr[i];
+            console.log(replicaArr[i]);
+            break;
+          }
         }
         Player.update({
             '_id': buddyObj.buddyId
@@ -60,7 +57,7 @@ GlobalFn.replicaBuddyList = function(buddyObj) {
             if (err) {
                 winston.error(err);
             } else {
-                Obj[replicaname].send(buddyObj);
+                ReplicaList[replicaname].send(buddyObj);
             }
         });
 
@@ -73,7 +70,7 @@ GlobalFn.replicaBuddyList = function(buddyObj) {
             if (err) {
                 winston.error(err);
             } else {
-                Obj[buddyObj.replica].send(buddyObj);
+                ReplicaList[buddyObj.replica].send(buddyObj);
             }
         });
 
@@ -128,7 +125,7 @@ GlobalFn.retrieveSplitAndBroadcast = function() {
                             let playerArray = _.chunk(online_refiltered, 5);
                             for (let i = 0, len = playerArray.length; i < len; i++) {
                                 findAvailableReplica(5000).then(function(result) {
-                                    let replica = Obj[result.replicaname];
+                                    let replica = ReplicaList[result.replicaname];
                                     // Check if replica is connected and receiving messages;
                                     if (replica !== undefined && replica.connected) {
                                         replica.send({
@@ -139,6 +136,7 @@ GlobalFn.retrieveSplitAndBroadcast = function() {
                                             message: msgObj.message
                                         });
                                     } else {
+                                      // If no replica is found repeat last iteration
                                         i--;
                                     }
                                 });
@@ -155,8 +153,6 @@ GlobalFn.retrieveSplitAndBroadcast = function() {
                     addToHistory.save(function(err) {
                       if(err) {
                         winston.error(err);
-                      } else {
-                        console.log('all good');
                       }
                     });
 
