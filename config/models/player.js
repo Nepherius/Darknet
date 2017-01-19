@@ -76,6 +76,7 @@ const playerSchema = mongoose.Schema({
         type: String,
         default: 'main'
     },
+    ignorelist: [Number],
     banned: {
         type: Boolean,
         default: false

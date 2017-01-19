@@ -12,7 +12,6 @@ const Player = require('../config/models/player.js');
 
 /************* Global Variables and Functions *************/
 
-
 const GlobalFn = {
     /****** General Functions ******/
     die: function(msg) {

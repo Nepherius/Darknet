@@ -193,6 +193,16 @@ let cmdList = [{
     help: 'stats',
     accessRequired: 1
 }, {
+  cmdName: 'ignore',
+  description: 'Add player to ignore list.',
+  help: 'ignore < player name >',
+  accessRequired: 1
+},{
+  cmdName: 'unignore',
+  description: 'Remove player from ignore list.',
+  help: 'unignore < player name >',
+  accessRequired: 1
+},{
     cmdName: 'cmdlist',
     description: 'List all commands.',
     help: 'cmdlist',

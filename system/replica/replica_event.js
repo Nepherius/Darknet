@@ -94,7 +94,10 @@ GlobalFn.retrieveSplitAndBroadcast = function() {
             Online.find().populate({
                 path: '_id',
                 match: {
-                    [msgObj.channel + 'Channel']: true
+                  // Select players with specified channel enabled
+                    [msgObj.channel + 'Channel']: true,
+                  // Select players that don't have sender on ignore list
+                    ignorelist :{$nin : [msgObj.userid]}
                 }
             }).exec(function(err, online) {
                 if (err) {

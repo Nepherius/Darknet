@@ -83,7 +83,6 @@ const coreCmd = {
         });
     },
     stats: function(userId) {
-
         Promise.join(
             Player.count({
                 'accessLevel': {
@@ -848,6 +847,70 @@ const coreCmd = {
             }
             GlobalFn.PMUser(userId, GlobalFn.blob('Replicas Status', repStatus));
         });
+    },
+    ignore: function(userId, args) {
+        if (!args[0]) {
+            GlobalFn.PMUser(userId, 'Invalid request, see !help ignore.', 'warning');
+        } else {
+            let userName = _.capitalize(args[0]);
+            Player.findOne({
+                'name': userName
+            }, function(err, result) {
+                if (err) {
+                    winston.error(err);
+                    GlobalFn.PMUser(userId, 'Database operation failed.', 'error');
+                } else if (result === null) {
+                    GlobalFn.PMUser(userId, 'Specified player is not a member.', 'warning');
+                } else {
+                    Player.findOneAndUpdate({
+                        '_id': userId
+                    }, {
+                        $addToSet: {
+                            'ignorelist': result._id
+                        }
+                    }, function(err) {
+                        if (err) {
+                            winston.error(err);
+                            GlobalFn.PMUser(userId, 'Database operation failed.', 'error');
+                        } else {
+                          GlobalFn.PMUser(userId, 'Added ' + userName + ' to ignore list.', 'success');
+                        }
+                    });
+                }
+            });
+        }
+    },
+    unignore: function(userId, args) {
+        if (!args[0]) {
+            GlobalFn.PMUser(userId, 'Invalid request, see !help unignore.', 'warning');
+        } else {
+            let userName = _.capitalize(args[0]);
+            Player.findOne({
+                'name': userName
+            }, function(err, result) {
+                if (err) {
+                    winston.error(err);
+                    GlobalFn.PMUser(userId, 'Database operation failed.', 'error');
+                } else if (result === null) {
+                    GlobalFn.PMUser(userId, 'Specified player is not a member.', 'warning');
+                } else {
+                    Player.findOneAndUpdate({
+                        '_id': userId
+                    }, {
+                        $pull: {
+                            'ignorelist': result._id
+                        }
+                    }, function(err) {
+                        if (err) {
+                            winston.error(err);
+                            GlobalFn.PMUser(userId, 'Database operation failed.', 'error');
+                        } else {
+                          GlobalFn.PMUser(userId, 'Removed ' + userName + ' from ignore list.', 'success');
+                        }
+                    });
+                }
+            });
+        }
     }
 };
 
@@ -871,7 +934,7 @@ const ValidSettings = {
 };
 
 var about = '<center> <font color=#FFFF00> :::Nephbot - Darknet::: </font> </center> \n\n';
-about += '<font color=#00FFFF>Version:</font> 0.2.2 \n';
+about += '<font color=#00FFFF>Version:</font> 0.2.3 \n';
 about += '<font color=#00FFFF>By:</font> Nepherius \n';
 about += '<font color=#00FFFF>On:</font>' + process.platform + '\n';
 about += '<font color=#00FFFF>In:</font> Node v' + process.versions.node + '\n';
