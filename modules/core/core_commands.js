@@ -237,7 +237,7 @@ const coreCmd = {
                             winston.error(err);
                         } else if (result === null) {
                             // If user is not found in the database, insert it with minimal info,
-                            // BUDDY_ADD Event will fill the test
+                            // BUDDY_ADD Event will fill the rest
                             const addPlayer = new Player();
                             addPlayer._id = idResult;
                             addPlayer.name = _.capitalize(userName);
@@ -291,7 +291,7 @@ const coreCmd = {
                             winston.error(err);
                         } else if (result === null) {
                             // If user is not found in the database, insert it with minimal info,
-                            // BUDDY_ADD Event will fill the test
+                            // BUDDY_ADD Event will fill the rest
                             const addPlayer = new Player();
                             addPlayer._id = idResult;
                             addPlayer.name = userName;
@@ -648,10 +648,8 @@ const coreCmd = {
 
         }
     },
-    test: function(userId, msg) {
-
-        /// Huh ?
-
+    test: function(userId) {
+        
     },
     addreplica: function(userId, args) {
         addReplica = new Replica();
@@ -820,7 +818,7 @@ const coreCmd = {
                         let historyMsg = '<center> <font color=#FFFF00> :::Darknet History::: </font> </center> \n\n';
                         for (let i = 0, len = result.length; i < len; i++) {
                             historyMsg += '<font color=#00FFFF>' + _.capitalize(result[i].channel) + ': </font>';
-                            historyMsg += result[i].message + '<font color=#00FFFF> [' +
+                            historyMsg += result[i].message.replace(/[^\x00-\x7F]/gmi, "") + '<font color=#00FFFF> [' +
                                 result[i].name + ']</font> - ' +
                                 moment(result[i].createdAt).fromNow() + '\n\n';
                             historyMsg += '<img src=tdb://id:GFX_GUI_FRIENDLIST_SPLITTER>\n\n';
@@ -873,7 +871,7 @@ const coreCmd = {
                             winston.error(err);
                             GlobalFn.PMUser(userId, 'Database operation failed.', 'error');
                         } else {
-                          GlobalFn.PMUser(userId, 'Added ' + userName + ' to ignore list.', 'success');
+                            GlobalFn.PMUser(userId, 'Added ' + userName + ' to ignore list.', 'success');
                         }
                     });
                 }
@@ -905,12 +903,79 @@ const coreCmd = {
                             winston.error(err);
                             GlobalFn.PMUser(userId, 'Database operation failed.', 'error');
                         } else {
-                          GlobalFn.PMUser(userId, 'Removed ' + userName + ' from ignore list.', 'success');
+                            GlobalFn.PMUser(userId, 'Removed ' + userName + ' from ignore list.', 'success');
                         }
                     });
                 }
             });
         }
+    },
+    playerhistory: function(userId, args) {
+        if (!args[0]) {
+            //If no arguments provided display braodcast history of sender.
+            Player.findOne({
+                '_id': userId
+            }, function(err, playerInfo) {
+                if (err) {
+                    winston.error(err);
+                } else {
+                    History
+                        .find({
+                            'name': playerInfo.name
+                        })
+                        .sort({
+                            createdAt: 'descending'
+                        })
+                        .limit(20)
+                        .exec(function(err, result) {
+                            if (err) {
+                                winston.error(err);
+                                GlobalFn.PMUser(userId, 'Database operation failed.', 'error');
+                            } else {
+                                let historyMsg = '<center> <font color=#FFFF00> :::' + playerInfo.name + '\'s Broadcast History::: </font> </center> \n\n';
+                                for (let i = 0, len = result.length; i < len; i++) {
+                                    historyMsg += '<font color=#00FFFF>' + _.capitalize(result[i].channel) + ': </font>';
+                                    historyMsg += result[i].message.replace(/[^\x00-\x7F]/gmi, "") + '<font color=#00FFFF> [' +
+                                        result[i].name + ']</font> - ' +
+                                        moment(result[i].createdAt).fromNow() + '\n\n';
+                                    historyMsg += '<img src=tdb://id:GFX_GUI_FRIENDLIST_SPLITTER>\n\n';
+                                }
+                                GlobalFn.PMUser(userId, GlobalFn.blob(playerInfo.name + '\'s History', historyMsg));
+                            }
+                        });
+                }
+
+            });
+        } else {
+            let userName = _.capitalize(args[0]);
+            History
+                .find({
+                    'name': userName
+                })
+                .sort({
+                    createdAt: 'descending'
+                })
+                .limit(30)
+                .exec(function(err, result) {
+                    if (err) {
+                        winston.error(err);
+                        GlobalFn.PMUser(userId, 'Database operation failed.', 'error');
+                    } else {
+                        let historyMsg = '<center> <font color=#FFFF00> :::' + userName + '\'s Broadcast History::: </font> </center> \n\n';
+                        for (let i = 0, len = result.length; i < len; i++) {
+                            historyMsg += '<font color=#00FFFF>' + _.capitalize(result[i].channel) + ': </font>';
+                            historyMsg += result[i].message.replace(/[^\x00-\x7F]/gmi, "") + '<font color=#00FFFF> [' +
+                                result[i].name + ']</font> - ' +
+                                moment(result[i].createdAt).fromNow() + '\n\n';
+                            historyMsg += '<img src=tdb://id:GFX_GUI_FRIENDLIST_SPLITTER>\n\n';
+                        }
+                        GlobalFn.PMUser(userId, GlobalFn.blob(userName + '\'s History', historyMsg));
+                    }
+                });
+        }
+    },
+    admins: function(userId) {
+        GlobalFn.PMUser(userId, 'My master is [<a href="user://Wafflespower">Wafflespower</a>], feel free to contact him for any Darknet issues, suggestions or just general feedback.');
     }
 };
 
@@ -934,7 +999,7 @@ const ValidSettings = {
 };
 
 var about = '<center> <font color=#FFFF00> :::Nephbot - Darknet::: </font> </center> \n\n';
-about += '<font color=#00FFFF>Version:</font> 0.2.3 \n';
+about += '<font color=#00FFFF>Version:</font> 0.2.5 \n';
 about += '<font color=#00FFFF>By:</font> Nepherius \n';
 about += '<font color=#00FFFF>On:</font>' + process.platform + '\n';
 about += '<font color=#00FFFF>In:</font> Node v' + process.versions.node + '\n';

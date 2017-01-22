@@ -203,9 +203,19 @@ let cmdList = [{
   help: 'unignore < player name >',
   accessRequired: 1
 },{
+    cmdName: 'playerhistory',
+    description: 'Display your or antoher player\'s last 20 broadcass.',
+    help: 'playerhistory [player name]',
+    accessRequired: 1
+},{
     cmdName: 'cmdlist',
     description: 'List all commands.',
     help: 'cmdlist',
+    accessRequired: 1
+},{
+    cmdName: 'admins',
+    description: 'Admins, sort of.',
+    help: 'admins',
     accessRequired: 1
 }];
 

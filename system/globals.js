@@ -145,27 +145,41 @@ const GlobalFn = {
             }
         }).on('error', function(err) {
             winston.warn('Unable to retrieve player data from Rubi-Ka.net ' + err);
-
         });
     },
     cleanFriendList: function() {
-        Player.findAndUpdate({
-            'accessLevel': 1,
-            'lastseen': {
-                $lte: moment().subtract(30, 'days')
-            }
-        }, {
-            'accessLevel': 0
-        }, function(err, result) {
-            if (err) {
-                winston.error(err);
-            } else {
-                winston.error('Removing inactive players from friend list');
-                for (let i = 0, len = result.length; i < len; i++) {
-                    send_BUDDY_REMOVE(result[i]._id);
-                }
-            }
-        });
+      Player.find({
+          'accessLevel': 1,
+          'lastseen': {
+              $lte: moment().subtract(60, 'days')
+          }
+      }, function(err, result) {
+          if (err) {
+              winston.error(err);
+          } else {
+              for (let i = 0, len = result.length; i < len; i++) {
+                  Player.update({
+                      '_id': result[i]._id
+                  }, {
+                      'accessLevel': 0
+                  }, function(err) {
+                      if (err) {
+                          winston.error(err);
+                      } else {
+                        if (result[i].buddyList === 'main') {
+                            send_BUDDY_REMOVE(result[i]._id);
+                        } else {
+                          GlobalFn.replicaBuddyList({
+                              buddyAction: 'rem',
+                              replica: result[i].buddyList,
+                              buddyId: result[i]._id
+                          });
+                        }
+                      }
+                  });
+              }
+          }
+      });
     },
     // Tools
     blob: function(name, content) {

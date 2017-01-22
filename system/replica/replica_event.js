@@ -38,29 +38,46 @@ GlobalFn.isReplicaConnected = function() {
     });
 };
 
+
 GlobalFn.replicaBuddyList = function(buddyObj) {
     if (buddyObj.buddyAction === 'add') {
-        let replicaname;
+      //stackoverflow solution all credit due to: jfriend00
         replicaArr = _.keys(ReplicaList);
-        for (let i = 0, len = replicaArr.length;i<len;i++) {
-          if (buddyObj.count <= (i + 2) * 990) {
-            replicaname = replicaArr[i];
-            console.log(replicaArr[i]);
-            break;
-          }
-        }
-        Player.update({
-            '_id': buddyObj.buddyId
-        }, {
-            'buddyList': replicaname
-        }, function(err) {
-            if (err) {
-                winston.error(err);
-            } else {
-                ReplicaList[replicaname].send(buddyObj);
+        Promise.firstToPassInSequence = function(arr, fn) {
+            let index = 0;
+            function next() {
+                if (index < arr.length) {
+                    return Promise.resolve().then(function() {
+                        // if fn() throws, this will turn into a rejection
+                        // if fn does not return a promise, it is wrapped into a promise
+                        return Promise.resolve(fn(arr[index++])).then(function(val) {
+                            return val ? val : next();
+                        });
+                    });
+                }
+                // make sure we always return a promise, even if array is empty
+                return Promise.resolve(null);
             }
-        });
+            return next();
+        };
 
+        Promise.firstToPassInSequence(replicaArr, function(replicaname) {
+            return Player.countAsync({
+                buddyList: replicaname
+            }).then(function(result) {
+                // if replica is connected and room left in buddy list
+                if (ReplicaList[replicaname].connected && result < 990) {
+                    return Player.updateAsync({
+                        '_id': buddyObj.buddyId
+                    }, {
+                        'buddyList': replicaname
+                    }).then(function() {
+                        ReplicaList[replicaname].send(buddyObj);
+                        return replicaname;
+                    });
+                }
+            });
+        });
     } else if (buddyObj.buddyAction === 'rem') {
         Player.update({
             '_id': buddyObj.buddyId
@@ -70,7 +87,11 @@ GlobalFn.replicaBuddyList = function(buddyObj) {
             if (err) {
                 winston.error(err);
             } else {
-                ReplicaList[buddyObj.replica].send(buddyObj);
+                try {
+                    ReplicaList[buddyObj.replica].send(buddyObj);
+                } catch (e) {
+                    winston.error(e);
+                }
             }
         });
 
@@ -94,10 +115,12 @@ GlobalFn.retrieveSplitAndBroadcast = function() {
             Online.find().populate({
                 path: '_id',
                 match: {
-                  // Select players with specified channel enabled
+                    // Select players with specified channel enabled
                     [msgObj.channel + 'Channel']: true,
-                  // Select players that don't have sender on ignore list
-                    ignorelist :{$nin : [msgObj.userid]}
+                    // Select players that don't have sender on ignore list
+                    ignorelist: {
+                        $nin: [msgObj.userid]
+                    }
                 }
             }).exec(function(err, online) {
                 if (err) {
@@ -139,7 +162,7 @@ GlobalFn.retrieveSplitAndBroadcast = function() {
                                             message: msgObj.message
                                         });
                                     } else {
-                                      // If no replica is found repeat last iteration
+                                        // If no replica is found repeat last iteration
                                         i--;
                                     }
                                 });
@@ -154,9 +177,9 @@ GlobalFn.retrieveSplitAndBroadcast = function() {
                     addToHistory.message = msgObj.message;
 
                     addToHistory.save(function(err) {
-                      if(err) {
-                        winston.error(err);
-                      }
+                        if (err) {
+                            winston.error(err);
+                        }
                     });
 
                 }

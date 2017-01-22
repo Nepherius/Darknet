@@ -1,6 +1,7 @@
 const rfr = require('rfr');
 const winston = require('winston');
-
+const request = require('request');
+const parseString = require('xml2js').parseString;
 const assert = require('assert');
 const util = require('util');
 const events = require('events');
@@ -18,7 +19,120 @@ const Player = rfr('./config/models/player.js');
 const Online = rfr('./config/models/online.js');
 
 const start = startBot;
-const GlobalFn = {};
+const GlobalFn = {
+    getPlayerData: function(userId, userName) {
+        request('http://people.anarchy-online.com/character/bio/d/5/name/' + userName + '/bio.xml', function(error, response, body) {
+            if (!error && response.statusCode == 200) {
+                if (body.length > 20) { // check if xml is empty
+                    parseString(body, function(err, result) {
+                        if (err) {
+                            winston.warn('Error parsing response from AO People: ' + err);
+                            GlobalFn.backUpGPD(userId, userName);
+                        } else {
+                            let charName = result.character.name[0];
+                            let charStats = result.character.basic_stats[0];
+                            let charOrg = {};
+                            if (result.character.organization_membership !== undefined) {
+                                charOrg.name = result.character.organization_membership[0].organization_name;
+                                charOrg.rank = result.character.organization_membership[0].rank;
+                            } else {
+                                charOrg.name = 'No organization';
+                                charOrg.rank = 'None';
+                            }
+
+                            // Create Or Update Player Database
+                            Player.findOneAndUpdate({
+                                _id: userId
+                            }, {
+                                firstname: charName.firstname,
+                                name: charName.nick,
+                                lastname: charName.lastname,
+                                level: Number(charStats.level),
+                                breed: charStats.breed,
+                                gender: charStats.gender,
+                                faction: charStats.faction,
+                                profession: charStats.profession,
+                                profession_title: charStats.profession_title,
+                                ai_rank: charStats.defender_rank,
+                                ai_level: Number(charStats.defender_rank_id),
+                                org: charOrg.name,
+                                org_rank: charOrg.rank,
+                                lastupdate: Date.now(),
+                                source: 'people.anarchy-online.com'
+                            }, {
+                                upsert: true,
+                                setDefaultsOnInsert: true
+                            }, function(err) {
+                                if (err) {
+                                    winston.error(err);
+                                } else {
+                                    //onClientName.emit(userId, charName.name);
+                                }
+                            });
+                        }
+                    });
+                }
+            }
+        }).on('error', function(err) {
+            winston.warn('Error while trying to connect to AO People: ' + err);
+            GlobalFn.backUpGPD(userId, userName);
+        });
+    },
+
+    backUpGPD: function(userId, userName) {
+        request('https://rubi-ka.net/services/characters.asmx/GetAoCharacterXml?name=' + userName, function(error, response, body) {
+            if (!error && response.statusCode == 200) {
+                if (body.length > 20) { // check if xml is empty
+                    parseString(body, function(err, result) {
+                        let charName = result.character.name[0];
+                        let charStats = result.character.basic_stats[0];
+                        let charOrg = {};
+                        if (result.character.organization_membership !== undefined) {
+                            charOrg.name = result.character.organization_membership[0].organization_name;
+                            charOrg.rank = result.character.organization_membership[0].rank;
+                        } else {
+                            charOrg.name = 'No organization';
+                            charOrg.rank = 'None';
+                        }
+
+                        // Create Or Update Player Database
+                        Player.findOneAndUpdate({
+                            _id: userId
+                        }, {
+                            firstname: charName.firstname,
+                            name: charName.nick,
+                            lastname: charName.lastname,
+                            level: Number(charStats.level),
+                            breed: charStats.breed,
+                            gender: charStats.gender,
+                            faction: charStats.faction,
+                            profession: charStats.profession,
+                            profession_title: charStats.profession_title,
+                            ai_rank: charStats.defender_rank,
+                            ai_level: Number(charStats.defender_rank_id),
+                            org: charOrg.name,
+                            org_rank: charOrg.rank,
+                            lastupdate: Date.now(),
+                            source: 'Rubi-Ka.net'
+                        }, {
+                            upsert: true,
+                            setDefaultsOnInsert: true
+                        }, function(err) {
+                            if (err) {
+                                winston.error(err);
+                            } else {
+                              //onClientName.emit(userId, charName.name);
+                            }
+                        });
+                    });
+                }
+            }
+        }).on('error', function(err) {
+            winston.warn('Unable to retrieve player data from Rubi-Ka.net ' + err);
+
+        });
+    }
+};
 
 Replica.findOneAndUpdate({
     'replicaname': process.argv[2]
@@ -177,7 +291,7 @@ handle[auth.AOCP.CLIENT_NAME] = function(data, u) {
     let userId = u.I();
     let userName = u.S();
     u.done();
-    //GlobalFn.getPlayerData(userId, userName);
+    GlobalFn.getPlayerData(userId, userName);
 };
 
 handle[auth.AOCP.BUDDY_ADD] = function(data, u) { // handles online/offline status too
@@ -276,7 +390,7 @@ global.send_ONLINE_SET = function(arg) {
 };
 
 global.send_BUDDY_ADD = function(userId) {
-    winston.info('%s -> BUDDY_ADD_id %d', process.argv[2],userId);
+    winston.info('%s -> BUDDY_ADD_id %d', process.argv[2], userId);
     send(
         auth.AOCP.BUDDY_ADD, [
             ['I', userId],
@@ -285,7 +399,7 @@ global.send_BUDDY_ADD = function(userId) {
 };
 
 global.send_BUDDY_REMOVE = function(userId) {
-    winston.info('%s -> BUDDY_REMOVE_id %d', process.argv[2],userId);
+    winston.info('%s -> BUDDY_REMOVE_id %d', process.argv[2], userId);
     send(
         auth.AOCP.BUDDY_REMOVE, [
             ['I', userId]
