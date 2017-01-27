@@ -37,6 +37,7 @@ const GlobalFn = {
         }
     },
     getPlayerData: function(userId, userName) {
+      winston.debug('Retrieving info for ' + userName + ' with ID ' + userId);
         request('http://people.anarchy-online.com/character/bio/d/5/name/' + userName + '/bio.xml', function(error, response, body) {
             if (!error && response.statusCode == 200) {
                 if (body.length > 20) { // check if xml is empty
@@ -148,38 +149,53 @@ const GlobalFn = {
         });
     },
     cleanFriendList: function() {
-      Player.find({
-          'accessLevel': 1,
-          'lastseen': {
-              $lte: moment().subtract(60, 'days')
-          }
-      }, function(err, result) {
-          if (err) {
-              winston.error(err);
-          } else {
-              for (let i = 0, len = result.length; i < len; i++) {
-                  Player.update({
-                      '_id': result[i]._id
-                  }, {
-                      'accessLevel': 0
-                  }, function(err) {
-                      if (err) {
-                          winston.error(err);
-                      } else {
-                        if (result[i].buddyList === 'main') {
-                            send_BUDDY_REMOVE(result[i]._id);
+      winston.info('Cleaning friend list.');
+        Player.find({
+            'accessLevel': 1,
+            'lastseen': {
+                $lte: moment().subtract(90, 'days')
+            }
+        }, function(err, result) {
+            if (err) {
+                winston.error(err);
+            } else {
+                for (let i = 0, len = result.length; i < len; i++) {
+                    Player.update({
+                        '_id': result[i]._id
+                    }, {
+                        'accessLevel': 0
+                    }, function(err) {
+                        if (err) {
+                            winston.error(err);
                         } else {
-                          GlobalFn.replicaBuddyList({
-                              buddyAction: 'rem',
-                              replica: result[i].buddyList,
-                              buddyId: result[i]._id
-                          });
+                            if (result[i].buddyList === 'main') {
+                                send_BUDDY_REMOVE(result[i]._id);
+                            } else {
+                                GlobalFn.replicaBuddyList({
+                                    buddyAction: 'rem',
+                                    replica: result[i].buddyList,
+                                    buddyId: result[i]._id
+                                });
+                            }
                         }
-                      }
-                  });
-              }
-          }
-      });
+                    });
+                }
+            }
+        });
+    },
+    updatePlayerDb: function() {
+        Player.find(function(err, result) {
+            if (err) {
+                winston.error(err);
+            } else {
+                winston.info('Updating info for ' + result.length + ' players.');
+                for (let i = 0, len = result.length; i < len; i++) {
+                    setTimeout(function() {
+                        GlobalFn.getPlayerData(result[i]._id, result[i].name);
+                    }, i * 250);
+                }
+            }
+        });
     },
     // Tools
     blob: function(name, content) {

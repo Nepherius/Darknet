@@ -204,7 +204,7 @@ let cmdList = [{
   accessRequired: 1
 },{
     cmdName: 'playerhistory',
-    description: 'Display your or antoher player\'s last 20 broadcass.',
+    description: 'Display your or another player\'s last 20 broadcass.',
     help: 'playerhistory [player name]',
     accessRequired: 1
 },{

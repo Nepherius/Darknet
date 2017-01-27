@@ -27,7 +27,12 @@ GlobalFn.isReplicaConnected = function() {
                     if (ReplicaList[result[i].replicaname] === undefined ||
                         !ReplicaList[result[i].replicaname].connected) {
                         try {
+                            //Start Child processes
                             ReplicaList[result[i].replicaname] = fork('system/replica/replica_main.js', [result[i].replicaname]);
+                            //Setup Child message listener
+                            ReplicaList[result[i].replicaname].on('message', function(data) {
+                                handleChildMessage(data);
+                            });
                         } catch (err) {
                             winston.error(err);
                         }
@@ -38,13 +43,19 @@ GlobalFn.isReplicaConnected = function() {
     });
 };
 
-
+function handleChildMessage(msgObj) {
+    if (msgObj.type === 'invite') {
+      winston.debug('Inviting user to group on child request');
+        send_PRIVGRP_INVITE(msgObj.userId);
+    }
+}
 GlobalFn.replicaBuddyList = function(buddyObj) {
     if (buddyObj.buddyAction === 'add') {
-      //stackoverflow solution all credit due to: jfriend00
+        //stackoverflow solution all credit due to: jfriend00
         replicaArr = _.keys(ReplicaList);
         Promise.firstToPassInSequence = function(arr, fn) {
             let index = 0;
+
             function next() {
                 if (index < arr.length) {
                     return Promise.resolve().then(function() {
@@ -187,7 +198,6 @@ GlobalFn.retrieveSplitAndBroadcast = function() {
         }
     });
 };
-
 
 function removeNull(e) {
     return e._id !== null;

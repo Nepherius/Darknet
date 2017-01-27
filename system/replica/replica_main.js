@@ -7,6 +7,7 @@ const util = require('util');
 const events = require('events');
 const Promise = require('bluebird');
 const mongoose = require('mongoose');
+const moment = require('moment');
 mongoose.connect('mongodb://localhost/darknet');
 
 const connect = rfr('./system/core/connect');
@@ -121,7 +122,7 @@ const GlobalFn = {
                             if (err) {
                                 winston.error(err);
                             } else {
-                              //onClientName.emit(userId, charName.name);
+                                //onClientName.emit(userId, charName.name);
                             }
                         });
                     });
@@ -169,13 +170,6 @@ winston.configure({
         })
     ]
 });
-
-
-/* /// Send message to Master process
-function func(input) {
-    process.send('pong');
-}
-*/
 
 const Prefix = {
     wts: '[' + '<font color=#FF0000>WTS</font>' + '] ',
@@ -278,7 +272,7 @@ handle[auth.AOCP.LOGIN_ERROR] = function(data, u) {
 };
 
 handle[auth.AOCP.LOGIN_OK] = function() {
-    winston.info('Logged On');
+    winston.info(process.argv[2] +' logged on!');
 
     const recursivePing = function() {
         send_PING();
@@ -291,7 +285,20 @@ handle[auth.AOCP.CLIENT_NAME] = function(data, u) {
     let userId = u.I();
     let userName = u.S();
     u.done();
-    GlobalFn.getPlayerData(userId, userName);
+    Player.findOne({
+        '_id': userId
+    }, function(err, result) {
+        if (err) {
+            winston.error(err);
+        } else if (result === null || result === undefined ||
+            (moment().subtract(24, 'hours').isAfter(moment(result.lastupdate)) &&
+          process.hrtime(startTime)[0] > 20)) {
+            GlobalFn.getPlayerData(userId, userName);
+        } else {
+            winston.debug('No update for: ' + userId + ' already updated on ' +
+                result.lastupdate);
+        }
+    });
 };
 
 handle[auth.AOCP.BUDDY_ADD] = function(data, u) { // handles online/offline status too
@@ -313,14 +320,14 @@ handle[auth.AOCP.BUDDY_ADD] = function(data, u) { // handles online/offline stat
 handle[auth.AOCP.BUDDY_REMOVE] = function(data, u) {
     let userId = u.I();
     u.done();
-    winston.debug('BUDDY_REMOVE:' + userId);
+    winston.debug(process.argv[2] + ' BUDDY_REMOVE:' + userId);
     buddyStatus.emit('offline', userId);
 };
 
 handle[auth.AOCP.MESSAGE_SYSTEM] = function(data, u) {
     var systemMsg = u.S();
     u.done();
-    winston.info('System Message : ' + systemMsg);
+    winston.debug('System Message : ' + systemMsg);
 };
 handle[auth.AOCP.CLIENT_LOOKUP] = function(data, u) {
     let userId = u.I();
@@ -413,13 +420,25 @@ global.send_PING = function() {
             ['S', 'Ping']
         ]);
 };
-
 // Friend(Buddy) List
 buddyStatus.on('online', function(userId, userStatus) {
-    Player.update({
+    Player.findOneAndUpdate({
         '_id': userId
     }, {
         'lastseen': Date.now()
+    }, function(err, result) {
+        if (err) {
+            winston.error(err);
+        } else {
+            winston.debug('Updated lastseen of user: ' + userId);
+            if (result !== null && result.autoinvite && result.banned === false) {
+                winston.debug('Sending invite request for user: ' + userId);
+                process.send({
+                    type: 'invite',
+                    userId: userId
+                });
+            }
+        }
     });
     var addOnline = new Online();
     addOnline._id = userId;

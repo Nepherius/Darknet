@@ -159,14 +159,13 @@ handle[auth.AOCP.CLIENT_NAME] = function(data, u) {
         if (err) {
             winston.error(err);
         } else if (result === null || result === undefined ||
-            moment().subtract(48, 'hours').isAfter(moment(result.lastupdate))) {
+            (moment().subtract(24, 'hours').isAfter(moment(result.lastupdate)) &&
+          process.hrtime(startTime)[0] > 60)) {
             GlobalFn.getPlayerData(userId, userName);
         } else {
-            winston.debug('No update for: ' + userId + ' already updated on ' +
-                result.lastupdate);
+            winston.debug('Skipping update for ' + userId);
         }
     });
-
 };
 
 handle[auth.AOCP.BUDDY_ADD] = function(data, u) { // handles online/offline status too
@@ -404,9 +403,9 @@ global.send_PING = function() {
 
 // Private Messages
 incMessage.on('pm', function(userId, message) {
-    // Continue only if at least 30 seconds passed since login
+    // Continue only if at least 60 seconds passed since login
     // to prevent offline msg spam
-    if (process.hrtime(startTime)[0] > 30 && userId !== GlobalFn.botId) {
+    if (process.hrtime(startTime)[0] > 60 && userId !== GlobalFn.botId) {
         if (!message.match(/Away from keyboard/igm)) { // if message is afk reply stop here
             let cmdName = message.split(' ')[0].toLowerCase();
             Promise.join(

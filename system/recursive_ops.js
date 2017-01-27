@@ -24,6 +24,10 @@ agenda.define('start replica', function(job) {
     GlobalFn.isReplicaConnected();
 });
 
+agenda.define('update player database', function(job) {
+    GlobalFn.updatePlayerDb();
+});
+
 agenda.define('clean friend list', function(job) {
     GlobalFn.cleanFriendList();
 });
@@ -31,6 +35,7 @@ agenda.define('clean friend list', function(job) {
 agenda.on('ready', function() {
     agenda.every('3 seconds', 'broadcast');
     agenda.every('1 minutes', 'start replica');
-    agenda.every('24 hours','clean friend list');
+    agenda.every('24 hours','update player database');
+    agenda.every('48 hours','clean friend list');
     agenda.start();
 });
