@@ -192,7 +192,7 @@ const GlobalFn = {
                 for (let i = 0, len = result.length; i < len; i++) {
                     setTimeout(function() {
                         GlobalFn.getPlayerData(result[i]._id, result[i].name);
-                    }, i * 250);
+                    }, i * 500);
                 }
             }
         });

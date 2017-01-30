@@ -193,29 +193,34 @@ let cmdList = [{
     help: 'stats',
     accessRequired: 1
 }, {
-  cmdName: 'ignore',
-  description: 'Add player to ignore list.',
-  help: 'ignore < player name >',
-  accessRequired: 1
-},{
-  cmdName: 'unignore',
-  description: 'Remove player from ignore list.',
-  help: 'unignore < player name >',
-  accessRequired: 1
-},{
+    cmdName: 'ignore',
+    description: 'Add player to ignore list.',
+    help: 'ignore < player name >',
+    accessRequired: 1
+}, {
+    cmdName: 'unignore',
+    description: 'Remove player from ignore list.',
+    help: 'unignore < player name >',
+    accessRequired: 1
+}, {
     cmdName: 'playerhistory',
     description: 'Display your or another player\'s last 20 broadcass.',
     help: 'playerhistory [player name]',
     accessRequired: 1
-},{
+}, {
     cmdName: 'cmdlist',
     description: 'List all commands.',
     help: 'cmdlist',
     accessRequired: 1
-},{
+}, {
     cmdName: 'admins',
     description: 'Admins, sort of.',
     help: 'admins',
+    accessRequired: 1
+}, {
+    cmdName: 'lastseen',
+    description: 'Display how long ago was a player last seen.',
+    help: 'lastseen < player name >',
     accessRequired: 1
 }];
 

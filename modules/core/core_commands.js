@@ -649,6 +649,7 @@ const coreCmd = {
         }
     },
     test: function(userId) {
+        //For testing purposes only, keep empty
     },
     addreplica: function(userId, args) {
         addReplica = new Replica();
@@ -975,6 +976,53 @@ const coreCmd = {
     },
     admins: function(userId) {
         GlobalFn.PMUser(userId, 'My master is [<a href="user://Wafflespower">Wafflespower</a>], feel free to contact him for any Darknet issues, suggestions or just general feedback.');
+    },
+    lastseen: function(userId, args) {
+        if (!args[0]) {
+            GlobalFn.PMUser(userId, 'Invalid request.', 'warning');
+        } else {
+            let userName = _.capitalize(args[0]);
+            // Check if player is in database.
+            Player.findOne({
+                'name': userName
+            }, function(err, player) {
+                if (err) {
+                    winston.error(err);
+                    GlobalFn.PMUser(userId, 'Database operation failed.', 'error');
+                } else {
+                    if (!player) {
+                        GlobalFn.PMUser(userId, 'I have never seen <font color=#FF0000>' +
+                         userName + '</font>!', 'warning');
+                    } else {
+                        // Check if player is online.
+                        Online.findOne({
+                            '_id': player._id
+                        }, function(err, result) {
+                            if (err) {
+                                winston.error(err);
+                                GlobalFn.PMUser(userId, 'Database operation failed.', 'error');
+                            } else {
+                                // If player is NOT online.
+                                if (result === null) {
+                                    GlobalFn.PMUser(userId, 'Player <font color=#FF0000>' +
+                                        userName +
+                                        '</font> Was last seen on ' + player.lastseen +
+                                        ' about  <font color=#FF0000>' +
+                                        moment(player.lastseen).fromNow() + '</font>!');
+                                } else {
+                                    // If PLayer is online.
+                                    GlobalFn.PMUser(userId, 'Player <font color=#FF0000>' +
+                                        userName + '</font> is <font color=#00FF00>Online</font> now!' +
+                                        ' Logged on at ' + result.createdAt +
+                                        ' about <font color=#FF0000>' +
+                                         moment(result.createdAt).fromNow() + '</font>!');
+                                }
+                            }
+                        });
+                    }
+                }
+            });
+        }
     }
 };
 
@@ -998,7 +1046,7 @@ const ValidSettings = {
 };
 
 var about = '<center> <font color=#FFFF00> :::Nephbot - Darknet::: </font> </center> \n\n';
-about += '<font color=#00FFFF>Version:</font> 0.2.7 \n';
+about += '<font color=#00FFFF>Version:</font> 0.2.8 \n';
 about += '<font color=#00FFFF>By:</font> Nepherius \n';
 about += '<font color=#00FFFF>On:</font>' + process.platform + '\n';
 about += '<font color=#00FFFF>In:</font> Node v' + process.versions.node + '\n';
