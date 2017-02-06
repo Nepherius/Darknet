@@ -195,16 +195,21 @@ process.on('message', function(Obj) {
                     ' [<a href="user://' + Obj.sender + '">' + Obj.sender + '</a>]');
             }
         }
+        // Assuming each message is distributed 1.4 seconds apart
+        // set ready flag to true after lenght * 1400 ms
+        // this can be improved by using promises
+        setTimeout(function() {
+            Replica.findOneAndUpdate({
+                'replicaname': GlobalFn.replicaname
+            }, {
+                'ready': true
+            }, function(err) {
+                if (err) {
+                    winston.error(err);
+                }
+            });
+        }, Obj.playerArray.length * 1400);
     }
-    Replica.findOneAndUpdate({
-        'replicaname': GlobalFn.replicaname
-    }, {
-        'ready': true
-    }, function(err) {
-        if (err) {
-            winston.error(err);
-        }
-    });
 });
 
 function broadcastMessage(i, userId, message) {
@@ -272,7 +277,7 @@ handle[auth.AOCP.LOGIN_ERROR] = function(data, u) {
 };
 
 handle[auth.AOCP.LOGIN_OK] = function() {
-    winston.info(process.argv[2] +' logged on!');
+    winston.info(process.argv[2] + ' logged on!');
 
     const recursivePing = function() {
         send_PING();
@@ -292,7 +297,7 @@ handle[auth.AOCP.CLIENT_NAME] = function(data, u) {
             winston.error(err);
         } else if (result === null || result === undefined ||
             (moment().subtract(24, 'hours').isAfter(moment(result.lastupdate)) &&
-          process.hrtime(startTime)[0] > 20)) {
+                process.hrtime(startTime)[0] > 20)) {
             GlobalFn.getPlayerData(userId, userName);
         } else {
             winston.debug('No update for: ' + userId + ' already updated on ' +
