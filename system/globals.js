@@ -160,7 +160,7 @@ const GlobalFn = {
                 winston.error(err);
             } else {
                 for (let i = 0, len = result.length; i < len; i++) {
-                    Player.update({
+                    Player.updateOne({
                         '_id': result[i]._id
                     }, {
                         'accessLevel': 0

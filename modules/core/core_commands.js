@@ -256,7 +256,7 @@ const coreCmd = {
                         } else if (result.accessLevel === 2) {
                             GlobalFn.PMUser(userId, userName + ' is already an admin.', 'warning');
                         } else {
-                            Player.update({
+                            Player.updateOne({
                                 'name': userName
                             }, {
                                 'accessLevel': 2
@@ -330,7 +330,7 @@ const coreCmd = {
                         } else if (result.accessLevel === 1) {
                             GlobalFn.PMUser(userId, userName + ' is already a member.', 'warning');
                         } else {
-                            Player.update({
+                            Player.updateOne({
                                 'name': userName
                             }, {
                                 'accessLevel': 1,
@@ -478,7 +478,7 @@ const coreCmd = {
                 } else if (!result || result.accessLevel !== 2) {
                     GlobalFn.PMUser(userId, userName + ' is not an admin.', 'warning');
                 } else {
-                    Player.update({
+                    Player.updateOne({
                         'name': userName
                     }, {
                         'accessLevel': 1
@@ -508,7 +508,7 @@ const coreCmd = {
                 } else if (!result || result.accessLevel < 1) {
                     GlobalFn.PMUser(userId, userName + ' is not member.', 'warning');
                 } else {
-                    Player.update({
+                    Player.updateOne({
                         'name': userName
                     }, {
                         'accessLevel': 0,
@@ -551,7 +551,7 @@ const coreCmd = {
             } else if (result.accessLevel === 0) {
                 GlobalFn.PMUser(userId, 'You are not a member!', 'warning');
             } else {
-                Player.update({
+                Player.updateOne({
                     '_id': userId
                 }, {
                     'accessLevel': 0,
@@ -598,7 +598,7 @@ const coreCmd = {
                 } else {
                     update[ValidChannels[args[0]]] = true;
                 }
-                Player.update({
+                Player.updateOne({
                     '_id': userId
                 }, update, function(err) {
                     if (err) {
@@ -632,7 +632,7 @@ const coreCmd = {
                 } else {
                     update[ValidChannels[args[0]]] = false;
                 }
-                Player.update({
+                Player.updateOne({
                     '_id': userId
                 }, update, function(err) {
                     if (err) {
@@ -719,7 +719,7 @@ const coreCmd = {
     },
     set: function(userId, args) {
         if (ValidSettings.hasOwnProperty(args[0]) || !args[1]) {
-            Settings.update({}, {
+            Settings.updateOne({}, {
                 [ValidSettings[args[0]]]: args[1]
             }, function(err) {
                 if (err) {
@@ -746,7 +746,7 @@ const coreCmd = {
             });
         } else if (args[0].toLowerCase() === 'on' || args[0].toLowerCase() === 'off') {
             if (args[0].toLowerCase() === 'on') {
-                Player.update({
+                Player.updateOne({
                     '_id': userId
                 }, {
                     autoinvite: true
@@ -758,7 +758,7 @@ const coreCmd = {
                     }
                 });
             } else {
-                Player.update({
+                Player.updateOne({
                     '_id': userId
                 }, {
                     autoinvite: false
@@ -992,7 +992,7 @@ const coreCmd = {
                 } else {
                     if (!player) {
                         GlobalFn.PMUser(userId, 'I have never seen <font color=#FF0000>' +
-                         userName + '</font>!', 'warning');
+                            userName + '</font>!', 'warning');
                     } else {
                         // Check if player is online.
                         Online.findOne({
@@ -1015,7 +1015,7 @@ const coreCmd = {
                                         userName + '</font> is <font color=#00FF00>Online</font> now!' +
                                         ' Logged on at ' + result.createdAt +
                                         ' about <font color=#FF0000>' +
-                                         moment(result.createdAt).fromNow() + '</font>!');
+                                        moment(result.createdAt).fromNow() + '</font>!');
                                 }
                             }
                         });
@@ -1023,6 +1023,80 @@ const coreCmd = {
                 }
             });
         }
+    },
+    addwarning: function(userId, args) {
+        if (!args[0]) {
+            return GlobalFn.PMUser(userId, 'Invalid request!', 'warning');
+        }
+        let userName = _.capitalize(args[0]);
+        Player.findOne({
+            'name': userName
+        }, function(err, result) {
+            if (err) {
+                winston.error(err);
+            } else {
+                if (result === null) {
+                    GlobalFn.PMUser(userId, userName + ' is not a member.', 'warning');
+                } else if (result.warnings + 1 >= GlobalFn.maxWarnings) {
+                    Player.updateOne({
+                        'name': userName
+                    }, {
+                        'banned': true
+                    }, function(err) {
+                        if (err) {
+                            winston.error(err);
+                        } else {
+                            GlobalFn.PMUser(userId, userName + ' has reached the maximum amount of warnings and has been banned!', 'success');
+                        }
+                    });
+                } else {
+                    Player.findOneAndUpdate({
+                        'name': userName
+                    }, {
+                        $inc: {
+                            'warnings': 1
+                        }
+                    }, function(err) {
+                        if (err) {
+                            winston.error(err);
+                        } else {
+                            GlobalFn.PMUser(result._id, 'A warning has been added to your account, you now have ' + (result.warnings + 1) + ' warning(s)!', 'warning');
+                            GlobalFn.PMUser(userId, 'A warning has been added to ' + userName + ' \'s account. ', 'success');
+                        }
+                    });
+                }
+            }
+        });
+    },
+    remwarning: function(userId, args) {
+        if (!args[0]) {
+            return GlobalFn.PMUser(userId, 'Invalid request!', 'warning');
+        }
+        let userName = _.capitalize(args[0]);
+        Player.findOne({
+            'name': userName
+        }, function(err, result) {
+            if (result === null) {
+                GlobalFn.PMUser(userId, 'Player not found!', 'warning');
+            } else if (result.warnings <= 0) {
+                GlobalFn.PMUser(userId, 'Player has no warnings!', 'warning');
+            } else {
+                Player.updateOne({
+                    'name': userName
+                }, {
+                    $inc: {
+                        'warnings': -1
+                    }
+                }, function(err) {
+                    if (err) {
+                        winston.error(err);
+                    } else {
+                        GlobalFn.PMUser(userId, 'One warning was removed from ' +
+                            userName + '\'s account.', 'success');
+                    }
+                });
+            }
+        });
     }
 };
 
@@ -1046,7 +1120,7 @@ const ValidSettings = {
 };
 
 var about = '<center> <font color=#FFFF00> :::Nephbot - Darknet::: </font> </center> \n\n';
-about += '<font color=#00FFFF>Version:</font> 0.2.9 \n';
+about += '<font color=#00FFFF>Version:</font> 0.3.0 \n';
 about += '<font color=#00FFFF>By:</font> Nepherius \n';
 about += '<font color=#00FFFF>On:</font>' + process.platform + '\n';
 about += '<font color=#00FFFF>In:</font> Node v' + process.versions.node + '\n';
@@ -1077,10 +1151,11 @@ helpMsg += '<font color=#00FFFF>wtb < msg > </font> - Send a message to Want To 
 helpMsg += '<font color=#00FFFF>pvm < msg > </font> - Send a message to PVM channel.' + '\n';
 
 var rules = '<center> <font color=#FFFF00> :::Darknet Rules::: </font> </center> \n\n';
-rules += '<font color=#00FFFF>Do NOT use any channel for chatting, you have PM for that.</font> \n';
-rules += '<font color=#00FFFF>Personal issues, accusations of players or organizations, profanity and jokes are not allowed!</font> \n';
-rules += '<font color=#00FFFF>The only language allowed is English!</font> \n';
-rules += '<font color=#00FFFF>DO NOT USE ALTS TO GET AROUND LOCK TIMERS!This will result in a ban!</font> \n\n';
+rules += '<font color=#00FFFF> - Personal issues, accusations of players or organizations, profanity and jokes are not allowed!</font> \n';
+rules += '<font color=#FF0000> - DRAMA</font><font color=#00FFFF> will not be tolerated, start it and you get banned, participate and at the very least you will get a temp lock and a warning added to your account!!</font> \n';
+rules += '<font color=#00FFFF> - Do NOT use any channel for chatting, you have PM for that.</font> \n';
+rules += '<font color=#00FFFF> - The only language allowed is English!</font> \n';
+rules += '<font color=#00FFFF> - DO NOT USE ALTS TO GET AROUND LOCK TIMERS!This will result in a ban!</font> \n\n';
 rules += '<font color=#FFC94D> WTB Channel: </font>';
 rules += '<font color=#00FFFF>If you Want to Buy items with YesDrop Flag your message goes here! \nOptionally if you are buying regular items and NoDrop items you can post A SINGLE messages on this channel instead 2 messages, one on wtb channel and one on lr channel.</font> \n';
 rules += '<font color=#FFC94D > WTS Channel: </font>';
@@ -1092,7 +1167,7 @@ rules += '<font color=#00FFFF>If you want to expand/form a team for that super-h
 rules += '<font color=#FFC94D > General Channel: </font>';
 rules += '<font color=#00FFFF>For any other game related messages that don\'t match the other channels post here!</font> \n';
 rules += '<font color=#FFC94D > Private Group(Chat): </font>';
-rules += '<font color=#00FFFF> This chat only exists to provide an alternative for private messages, it should NOT be used for chatting. DO NOT send any messages on this chat or you WILL be Banned!\n';
+rules += '<font color=#00FFFF> This chat only exists to provide an alternative for private messages, it should NOT be used for chatting. DO NOT send any messages on this chat or you WILL be Banned!\n\n';
 rules += '<font color=#FF0000>All bans are PERMANENT!</font> \n';
 
 

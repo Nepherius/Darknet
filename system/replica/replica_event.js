@@ -90,7 +90,7 @@ GlobalFn.replicaBuddyList = function(buddyObj) {
             });
         });
     } else if (buddyObj.buddyAction === 'rem') {
-        Player.update({
+        Player.updateOne({
             '_id': buddyObj.buddyId
         }, {
             'buddyList': 'main'

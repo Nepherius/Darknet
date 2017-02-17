@@ -191,7 +191,7 @@ let cmdList = [{
     cmdName: 'stats',
     description: 'Bot statistics',
     help: 'stats',
-    accessRequired: 1
+    accessRequired: 0
 }, {
     cmdName: 'ignore',
     description: 'Add player to ignore list.',
@@ -211,18 +211,30 @@ let cmdList = [{
     cmdName: 'cmdlist',
     description: 'List all commands.',
     help: 'cmdlist',
-    accessRequired: 1
+    accessRequired: 0
 }, {
     cmdName: 'admins',
     description: 'Admins, sort of.',
     help: 'admins',
-    accessRequired: 1
+    accessRequired: 0
 }, {
     cmdName: 'lastseen',
     description: 'Display how long ago was a player last seen.',
     help: 'lastseen < player name >',
     accessRequired: 1
-}];
+},{
+    cmdName: 'addwarning',
+    description: 'Add a warning to a players account.',
+    help: 'addwarning < player name >',
+    accessRequired: 2
+},
+{
+    cmdName: 'remwarning',
+    description: 'Removes a warning to a players account.',
+    help: 'remwarning < player name >',
+    accessRequired: 2
+}
+];
 
 
 // At the moment mongoose has no support for continue on error while using

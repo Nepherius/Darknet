@@ -412,11 +412,15 @@ incMessage.on('pm', function(userId, message) {
                 Command.findOne({
                     cmdName: cmdName
                 }),
-                Player.findById(userId),
+                Player.findByIdAsync(userId),
                 function(cmd, user) {
                     // Search for user in DB
                     if (user !== null && user.banned) {
-                        // Do nothing if user is banned, no need to waste a reply.
+                      if (user.gender === 'Male') {
+                        GlobalFn.PMUser(userId, 'You\'ve been a naughty boy, access denied!', 'error');
+                      } else {
+                        GlobalFn.PMUser(userId, 'You\'ve been a naughty girl, access denied!', 'error');
+                      }
                     } else if (cmd === null || cmd.length === 0) {
                         GlobalFn.PMUser(userId, 'Command not found!', 'warning');
                     } else if (cmd.disabled) {
@@ -461,8 +465,8 @@ incMessage.on('grp', function(userId, message) {
             if (err) {
                 winston.error(err);
             } else {
-                if (result.warnings >= GlobalFn.maxWarnings) {
-                    Player.update({
+                if (result.warnings + 1 >= GlobalFn.maxWarnings) {
+                    Player.updateOne({
                         '_id': userId
                     }, {
                         'banned': true
@@ -474,7 +478,7 @@ incMessage.on('grp', function(userId, message) {
                         }
                     });
                 } else {
-                    Player.update({
+                    Player.updateOne({
                         '_id': userId
                     }, {
                         $inc: {
@@ -504,7 +508,7 @@ buddyStatus.on('online', function(userId, userStatus) {
             winston.error(err);
         } else {
             winston.debug('Updated lastseen of user: ' + userId);
-            if (result.autoinvite && result.banned === false) {
+            if (result !== null && result.autoinvite && result.banned === false) {
               send_PRIVGRP_INVITE(userId);
             }
         }

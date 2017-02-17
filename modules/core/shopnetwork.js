@@ -97,7 +97,7 @@ exports.general = general = function(userId, args) {
                 addToQueue.userid = userId;
                 addToQueue.message = args.join(' ');
                 addToQueue.channel = 'general';
-                Promise.all([addToQueue.save(), Player.update({
+                Promise.all([addToQueue.save(), Player.updateOne({
                     '_id': userId
                 }, {
                     'generalLock': moment().add(GlobalFn.generalLockDuration, 'minutes')
@@ -126,7 +126,7 @@ exports.wts = wts = function(userId, args) {
                 addToQueue.userid = userId;
                 addToQueue.message = args.join(' ');
                 addToQueue.channel = 'wts';
-                Promise.all([addToQueue.save(), Player.update({
+                Promise.all([addToQueue.save(), Player.updateOne({
                     '_id': userId
                 }, {
                     'wtsLock': moment().add(GlobalFn.wtsLockDuration, 'minutes')
@@ -155,7 +155,7 @@ exports.wtb = wtb = function(userId, args) {
                 addToQueue.userid = userId;
                 addToQueue.message = args.join(' ');
                 addToQueue.channel = 'wtb';
-                Promise.all([addToQueue.save(), Player.update({
+                Promise.all([addToQueue.save(), Player.updateOne({
                     '_id': userId
                 }, {
                     'wtbLock': moment().add(GlobalFn.wtbLockDuration, 'minutes')
@@ -184,7 +184,7 @@ exports.lr = lr = function(userId, args) {
                 addToQueue.userid = userId;
                 addToQueue.message = args.join(' ');
                 addToQueue.channel = 'lr';
-                Promise.all([addToQueue.save(), Player.update({
+                Promise.all([addToQueue.save(), Player.updateOne({
                     '_id': userId
                 }, {
                     'lrLock': moment().add(GlobalFn.lrLockDuration, 'minutes')
@@ -213,7 +213,7 @@ exports.pvm = pvm = function(userId, args) {
                 addToQueue.userid = userId;
                 addToQueue.message = args.join(' ');
                 addToQueue.channel = 'pvm';
-                Promise.all([addToQueue.save(), Player.update({
+                Promise.all([addToQueue.save(), Player.updateOne({
                     '_id': userId
                 }, {
                     'pvmLock': moment().add(GlobalFn.pvmLockDuration, 'minutes')
@@ -235,7 +235,7 @@ exports.lock = lock = function(userId, args) {
     if (args.length < 2 || isNaN(args[2])) {
         GlobalFn.PMUser(userId, 'Invalid request, check help.', 'warning');
     } else if (args[1].toLowerCase() === 'all') {
-        Player.update({
+        Player.updateOne({
             'name': _.capitalize(args[0])
         }, {
             'wtsLock': moment().add(args[2], 'minutes'),
@@ -254,7 +254,7 @@ exports.lock = lock = function(userId, args) {
     } else if (validChannels.indexOf(args[1]) === -1) {
         GlobalFn.PMUser(userId, 'Invalid channel!', 'warning');
     } else {
-        Player.update({
+        Player.updateOne({
             'name': _.capitalize(args[0])
         }, {
             [args[1] + 'Lock']: moment().add(args[2], 'minutes')
@@ -274,7 +274,7 @@ exports.unlock = unlock = function(userId, args) {
     if (args.length < 1) {
         GlobalFn.PMUser(userId, 'Invalid request, check help.', 'warning');
     } else if (args[1] === 'all') {
-        Player.update({
+        Player.updateOne({
             'name': _.capitalize(args[0])
         }, {
             'wtsLock': moment().subtract(1, 'minutes'),
@@ -293,7 +293,7 @@ exports.unlock = unlock = function(userId, args) {
     } else if (validChannels.indexOf(args[1]) === -1) {
         GlobalFn.PMUser(userId, 'Invalid channel!', 'warning');
     } else {
-        Player.update({
+        Player.updateOne({
             'name': _.capitalize(args[0])
         }, {
             [args[1] + 'Lock']: moment().subtract(1, 'minutes')

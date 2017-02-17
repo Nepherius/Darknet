@@ -1,43 +1,43 @@
 {
-    "name": "Darknet",
-    "version": "0.2.9",
-    "description": "Anarchy Online Mass-Message shopping network",
-    "main": "start.js",
-    "dependencies": {
-        "agenda": "^0.9.0",
-        "base85": "^2.1.0",
-        "bluebird": "^3.4.6",
-        "express": "^4.14.0",
-        "lodash": "^4.17.2",
-        "moment": "^2.17.1",
-        "mongoose": "^4.7.2",
-        "prompt": "^1.0.0",
-        "request": "^2.79.0",
-        "rfr": "^1.2.3",
-        "winston": "^2.3.0",
-        "winston-daily-rotate-file": "^1.4.0",
-        "xml2js": "^0.4.17"
-    },
-    "scripts": {
-        "test": "echo \"Error: no test specified\" && exit 1"
-    },
-    "repository": {
-        "type": "git",
-        "url": "git+https://github.com/Nepherius/Darknet.git"
-    },
-    "keywords": [
-        "Anarchy",
-        "Online",
-        "Chat",
-        "Bot",
-        "Nephbot",
-        "Shopnet",
-        "Shopping network"
-    ],
-    "author": "Nepherius",
-    "license": "MIT",
-    "bugs": {
-        "url": "https://github.com/Nepherius/Darknet/issues"
-    },
-    "homepage": "https://github.com/Nepherius/Darknet#readme"
+  "name": "Darknet",
+  "version": "0.3.0",
+  "description": "Anarchy Online Mass-Message shopping network",
+  "main": "start.js",
+  "dependencies": {
+    "agenda": "^0.9.0",
+    "base85": "^2.1.0",
+    "bluebird": "^3.4.6",
+    "express": "^4.14.0",
+    "lodash": "^4.17.2",
+    "moment": "^2.17.1",
+    "mongoose": "^4.7.2",
+    "prompt": "^1.0.0",
+    "request": "^2.79.0",
+    "rfr": "^1.2.3",
+    "winston": "^2.3.0",
+    "winston-daily-rotate-file": "^1.4.0",
+    "xml2js": "^0.4.17"
+  },
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/Nepherius/Darknet.git"
+  },
+  "keywords": [
+    "Anarchy",
+    "Online",
+    "Chat",
+    "Bot",
+    "Nephbot",
+    "Shopnet",
+    "Shopping network"
+  ],
+  "author": "Nepherius",
+  "license": "MIT",
+  "bugs": {
+    "url": "https://github.com/Nepherius/Darknet/issues"
+  },
+  "homepage": "https://github.com/Nepherius/Darknet#readme"
 }
