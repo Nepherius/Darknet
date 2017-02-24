@@ -23,9 +23,9 @@ const ValidChannels = {
     lr: 'lrChannel',
     lootrights: 'lrChannel',
     wts: 'wtsChannel',
-    wtb: 'wtsChannel',
+    wtb: 'wtbChannel',
     all: 'all',
-    pvm: 'pvm'
+    pvm: 'pvmChannel'
 };
 
 const coreCmd = {
@@ -1120,7 +1120,7 @@ const ValidSettings = {
 };
 
 var about = '<center> <font color=#FFFF00> :::Nephbot - Darknet::: </font> </center> \n\n';
-about += '<font color=#00FFFF>Version:</font> 0.3.0 \n';
+about += '<font color=#00FFFF>Version:</font> 0.3.1 \n';
 about += '<font color=#00FFFF>By:</font> Nepherius \n';
 about += '<font color=#00FFFF>On:</font>' + process.platform + '\n';
 about += '<font color=#00FFFF>In:</font> Node v' + process.versions.node + '\n';
