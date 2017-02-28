@@ -55,7 +55,6 @@ GlobalFn.replicaBuddyList = function(buddyObj) {
         replicaArr = _.keys(ReplicaList);
         Promise.firstToPassInSequence = function(arr, fn) {
             let index = 0;
-
             function next() {
                 if (index < arr.length) {
                     return Promise.resolve().then(function() {
@@ -77,8 +76,8 @@ GlobalFn.replicaBuddyList = function(buddyObj) {
                 buddyList: replicaname
             }).then(function(result) {
                 // if replica is connected and room left in buddy list
-                if (ReplicaList[replicaname].connected && result < 990) {
-                    return Player.updateAsync({
+                if (ReplicaList[replicaname].connected && result < 900) {
+                    return Player.updateOneAsync({
                         '_id': buddyObj.buddyId
                     }, {
                         'buddyList': replicaname

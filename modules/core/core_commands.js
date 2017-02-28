@@ -314,7 +314,7 @@ const coreCmd = {
                                         },
                                         'buddyList': 'main'
                                     }, function(err, result) {
-                                        if (result >= 990) {
+                                        if (result >= 900) {
                                             GlobalFn.replicaBuddyList({
                                                 buddyAction: 'add',
                                                 buddyId: idResult,
@@ -349,7 +349,7 @@ const coreCmd = {
                                         },
                                         'buddyList': 'main'
                                     }, function(err, result) {
-                                        if (result >= 990) {
+                                        if (result >= 900) {
                                             GlobalFn.replicaBuddyList({
                                                 buddyAction: 'add',
                                                 buddyId: idResult,
@@ -405,7 +405,7 @@ const coreCmd = {
                                 },
                                 'buddyList': 'main'
                             }, function(err, result) {
-                                if (result >= 990) {
+                                if (result >= 900) {
                                     GlobalFn.replicaBuddyList({
                                         buddyAction: 'add',
                                         buddyId: userId,
@@ -446,7 +446,7 @@ const coreCmd = {
                             },
                             'buddyList': 'main'
                         }, function(err, result) {
-                            if (result >= 990) {
+                            if (result >= 900) {
                                 GlobalFn.replicaBuddyList({
                                     buddyAction: 'add',
                                     buddyId: userId,
@@ -1120,7 +1120,7 @@ const ValidSettings = {
 };
 
 var about = '<center> <font color=#FFFF00> :::Nephbot - Darknet::: </font> </center> \n\n';
-about += '<font color=#00FFFF>Version:</font> 0.3.1 \n';
+about += '<font color=#00FFFF>Version:</font> 0.3.2 \n';
 about += '<font color=#00FFFF>By:</font> Nepherius \n';
 about += '<font color=#00FFFF>On:</font>' + process.platform + '\n';
 about += '<font color=#00FFFF>In:</font> Node v' + process.versions.node + '\n';
