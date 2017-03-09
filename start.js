@@ -11,8 +11,24 @@ const _ = require('lodash');
 const replica_event = require('./system/replica/replica_event');
 const start = startBot;
 
+const configDB = require('./config/database');
 
-mongoose.connect('mongodb://localhost/darknet'); // connect to/create Database
+
+// configuration ===============================================================
+mongoose.connect(configDB.url, function(err) {
+  if (err) {
+    return winston.error(err)
+  } else {
+    console.log('Database connection established!');
+  }
+});
+
+process.on('SIGINT', function() {
+  mongoose.connection.close(function () {
+    console.log('Mongoose default connection disconnected through app termination');
+    process.exit(0);
+  });
+});
 
 let HOST, PORT;
 

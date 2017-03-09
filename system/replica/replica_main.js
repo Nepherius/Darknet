@@ -8,7 +8,10 @@ const events = require('events');
 const Promise = require('bluebird');
 const mongoose = require('mongoose');
 const moment = require('moment');
-mongoose.connect('mongodb://localhost/darknet');
+const configDB = rfr('./config/database');
+
+
+// configuration ===============================================================
 
 const connect = rfr('./system/core/connect');
 const handle = connect.handle;
@@ -18,6 +21,44 @@ const auth = rfr('./system/core/chat-packet');
 const Replica = rfr('./config/models/replica_login.js');
 const Player = rfr('./config/models/player.js');
 const Online = rfr('./config/models/online.js');
+
+// Configure Log
+//{ error: 0, warn: 1, info: 2, verbose: 3, debug: 4, silly: 5 }
+winston.configure({
+    level: 'info',
+    transports: [
+        new(winston.transports.Console)({
+            colorize: true,
+            'timestamp': true,
+            handleExceptions: true,
+            humanReadableUnhandledException: true
+        }),
+        new(require('winston-daily-rotate-file'))({
+            filename: './log',
+            prepend: true,
+            handleExceptions: true,
+            humanReadableUnhandledException: true
+        })
+    ]
+});
+
+mongoose.connect(configDB.url, function(err) {
+  if (err) {
+    return winston.error(err)
+  } else {
+    winston.debug('Replica Database connection established');
+  }
+});
+
+process.on('SIGINT', function() {
+  mongoose.connection.close(function () {
+    winston.debug('Terminating replica db connection');
+    process.exit(0);
+  });
+});
+
+// configuration ===============================================================
+
 
 const start = startBot;
 const GlobalFn = {
@@ -150,26 +191,6 @@ Replica.findOneAndUpdate({
 });
 
 const buddyStatus = new events.EventEmitter();
-
-// Configure Log
-//{ error: 0, warn: 1, info: 2, verbose: 3, debug: 4, silly: 5 }
-winston.configure({
-    level: 'info',
-    transports: [
-        new(winston.transports.Console)({
-            colorize: true,
-            'timestamp': true,
-            handleExceptions: true,
-            humanReadableUnhandledException: true
-        }),
-        new(require('winston-daily-rotate-file'))({
-            filename: './log',
-            prepend: true,
-            handleExceptions: true,
-            humanReadableUnhandledException: true
-        })
-    ]
-});
 
 const Prefix = {
     wts: '[' + '<font color=#FF0000>WTS</font>' + '] ',

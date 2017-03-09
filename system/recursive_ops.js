@@ -2,16 +2,20 @@ const winston = require('winston');
 const rfr = require('rfr');
 const moment = require('moment');
 const GlobalFn = rfr('system/globals.js');
+//const Start = rfr('start');
+const configDB = rfr('./config/database');
 
+const mongoose = require('bluebird').promisifyAll(require('mongoose'));
+
+// configuration ===============================================================
 const Agenda = require('agenda');
-const mongoConnectionString = "mongodb://localhost/agenda";
+const mongoConnectionString = configDB.url;
 const agenda = new Agenda({
-    db: {
-        address: mongoConnectionString
-    },
-    defaultLockLifetime: 120000
+        defaultLockLifetime: 120000
 });
-
+mongoose.connection.on('connected', () => {
+  agenda.mongo(mongoose.connection.collection('jobs').conn.db, 'jobs');
+});
 agenda.define('broadcast', {
     priority: 'high',
     concurrency: 20
