@@ -130,7 +130,8 @@ GlobalFn.retrieveSplitAndBroadcast = function() {
                     // Select players that don't have sender on ignore list
                     ignorelist: {
                         $nin: [msgObj.userid]
-                    }
+                    },
+                    banned: false
                 }
             }).exec(function(err, online) {
                 if (err) {

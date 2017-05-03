@@ -1,4 +1,3 @@
-
 const winston = require('winston');
 const prompt = require('prompt');
 const connect = require('./system/core/connect');
@@ -10,27 +9,30 @@ const Settings = require('./config/models/settings.js');
 const _ = require('lodash');
 const replica_event = require('./system/replica/replica_event');
 const start = startBot;
-
 const configDB = require('./config/database');
 
-
 // configuration ===============================================================
-mongoose.connect(configDB.url, function(err) {
-  if (err) {
-    return winston.error(err)
-  } else {
-    console.log('Database connection established!');
-  }
+mongoose.connect(configDB.url, {
+    server: {
+        reconnectTries: Number.MAX_VALUE
+    }
+}, function(err) {
+    if (err) {
+        return winston.error(err)
+    } else {
+        console.log('Database connection established!');
+    }
 });
 
 process.on('SIGINT', function() {
-  mongoose.connection.close(function () {
-    console.log('Mongoose default connection disconnected through app termination');
-    process.exit(0);
-  });
+    mongoose.connection.close(function() {
+        console.log('Mongoose default connection disconnected through app termination');
+        process.exit(0);
+    });
 });
 
-let HOST, PORT;
+let HOST,
+    PORT;
 
 // Check if login info exists;
 settingsExists();
@@ -95,12 +97,9 @@ Login.findOne({}, function(err, result) {
         GlobalFn.owner = result.owner;
         GlobalFn.botname = result.botname;
 
-
-
         start(HOST, PORT);
     }
 });
-
 
 function settingsExists() {
     Settings.find({}, function(err, result) {
@@ -118,7 +117,6 @@ function settingsExists() {
         }
     });
 }
-
 
 var schema = {
     properties: {

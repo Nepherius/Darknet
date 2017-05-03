@@ -16,6 +16,7 @@ const MsgQueue = rfr('config/models/message_queue.js');
 const History = rfr('config/models/history');
 const Command = rfr('config/models/commands.js');
 const Settings = rfr('config/models/settings.js');
+const Report = rfr('config/models/report.js')
 
 const ValidChannels = {
     general: 'generalChannel',
@@ -75,107 +76,79 @@ const coreCmd = {
                     cmdReply += '<font color=#00FFFF>Description:</font> ' + result[i].description + ' \n';
                     cmdReply += '<font color=#00FFFF>Usage:</font> ' + result[i].help + ' \n';
                     cmdReply += '<font color=#00FFFF>Access Required:</font> ' + result[i].accessRequired + ' \n';
-                    cmdReply += '<font color=#00FFFF>Status:</font>' +
-                        (result[i].enabled === false ? '<font color=#FF0000>Disabled' : '<font color=#00FF00>Enabled') + '</font>\n\n';
+                    cmdReply += '<font color=#00FFFF>Status:</font>' + (result[i].enabled === false
+                        ? '<font color=#FF0000>Disabled'
+                        : '<font color=#00FF00>Enabled') + '</font>\n\n';
                 }
                 GlobalFn.PMUser(userId, GlobalFn.blob('Command List', cmdReply));
             }
         });
     },
     stats: function(userId) {
-        Promise.join(
-            Player.count({
-                'accessLevel': {
-                    $gte: 1
-                }
-            }),
-            Online.count(),
-            Chat.count(),
-            //$lte: moment().subtract(30, 'days')
-            History.count({
-                createdAt: {
-                    $gte: moment().subtract(30, 'days')
-                }
-            }),
-            History.count({
-                'channel': 'general',
-                createdAt: {
-                    $gte: moment().subtract(30, 'days')
-                }
-            }),
-            History.count({
-                'channel': 'wtb',
-                createdAt: {
-                    $gte: moment().subtract(30, 'days')
-                }
-            }),
-            History.count({
-                'channel': 'wts',
-                createdAt: {
-                    $gte: moment().subtract(30, 'days')
-                }
-            }),
-            History.count({
-                'channel': 'lr',
-                createdAt: {
-                    $gte: moment().subtract(30, 'days')
-                }
-            }),
-            History.count({
-                'channel': 'pvm',
-                createdAt: {
-                    $gte: moment().subtract(30, 'days')
-                }
-            }),
-            History.count(),
-            History.count({
-                'channel': 'general'
-            }),
-            History.count({
-                'channel': 'wtb'
-            }),
-            History.count({
-                'channel': 'wts'
-            }),
-            History.count({
-                'channel': 'lr'
-            }),
-            History.count({
-                'channel': 'pvm'
-            }),
-            Player.count({
-                'banned': true
-            }),
-            function(members, online, chat, totalBroadcasts, general, wtb, wts, lr, pvm, totalBroadcastsAT, generalAT, wtbAT, wtsAT, lrAT, pvmAT, banned) {
-                let statsReply = '<center> <font color=#FFFF00> :::Darknet Statistics::: </font> </center> \n\n';
-                statsReply += '<img src=tdb://id:GFX_GUI_FRIENDLIST_SPLITTER>\n';
-                statsReply += '<font color=#00FFFF>Total Members:</font>' + members + '\n';
-                statsReply += '<font color=#00FFFF>Online Members:</font>' + online + '\n';
-                statsReply += '<font color=#00FFFF>Members in Private Chat:</font>' + chat + '\n';
-                statsReply += '<font color=#00FFFF>Banned:</font>' + banned + '\n';
-                statsReply += '<img src=tdb://id:GFX_GUI_FRIENDLIST_SPLITTER>\n\n';
-                statsReply += '<img src=tdb://id:GFX_GUI_FRIENDLIST_SPLITTER>\n';
-                statsReply += '<font color=#00FFFF>Total Broadcasts Last 30 days:</font>' + totalBroadcasts + '\n';
-                statsReply += '<font color=#00FFFF>General:</font>' + general + '\n';
-                statsReply += '<font color=#00FFFF>WTB:</font>' + wtb + '\n';
-                statsReply += '<font color=#00FFFF>WTS:</font>' + wts + '\n';
-                statsReply += '<font color=#00FFFF>Lootrights:</font>' + lr + '\n';
-                statsReply += '<font color=#00FFFF>Pvm:</font>' + pvm + '\n';
-                statsReply += '<img src=tdb://id:GFX_GUI_FRIENDLIST_SPLITTER>\n\n';
-                statsReply += '<img src=tdb://id:GFX_GUI_FRIENDLIST_SPLITTER>\n';
-                statsReply += '<font color=#00FFFF>Total Broadcasts All Time:</font>' + totalBroadcastsAT + '\n';
-                statsReply += '<font color=#00FFFF>General:</font>' + generalAT + '\n';
-                statsReply += '<font color=#00FFFF>WTB:</font>' + wtbAT + '\n';
-                statsReply += '<font color=#00FFFF>WTS:</font>' + wtsAT + '\n';
-                statsReply += '<font color=#00FFFF>Lootrights:</font>' + lr + '\n';
-                statsReply += '<font color=#00FFFF>Pvm:</font>' + pvmAT + '\n';
-                statsReply += '<img src=tdb://id:GFX_GUI_FRIENDLIST_SPLITTER>\n\n';
-                statsReply += '<img src=tdb://id:GFX_GUI_FRIENDLIST_SPLITTER>\n';
-                statsReply += '<font color=#00FFFF>Uptime:</font> ' +
-                    moment.duration(process.uptime(), 'seconds').humanize() + ' \n';
-                statsReply += '<img src=tdb://id:GFX_GUI_FRIENDLIST_SPLITTER>';
-                GlobalFn.PMUser(userId, GlobalFn.blob('Darknet Stats', statsReply));
-            }).catch(function(err) {
+        Promise.join(Player.count({
+            'accessLevel': {
+                $gte: 1
+            }
+        }), Online.count(), Chat.count(),
+        //$lte: moment().subtract(30, 'days')
+        History.count({
+            createdAt: {
+                $gte: moment().subtract(30, 'days')
+            }
+        }), History.count({
+            'channel': 'general',
+            createdAt: {
+                $gte: moment().subtract(30, 'days')
+            }
+        }), History.count({
+            'channel': 'wtb',
+            createdAt: {
+                $gte: moment().subtract(30, 'days')
+            }
+        }), History.count({
+            'channel': 'wts',
+            createdAt: {
+                $gte: moment().subtract(30, 'days')
+            }
+        }), History.count({
+            'channel': 'lr',
+            createdAt: {
+                $gte: moment().subtract(30, 'days')
+            }
+        }), History.count({
+            'channel': 'pvm',
+            createdAt: {
+                $gte: moment().subtract(30, 'days')
+            }
+        }), History.count(), History.count({'channel': 'general'}), History.count({'channel': 'wtb'}), History.count({'channel': 'wts'}), History.count({'channel': 'lr'}), History.count({'channel': 'pvm'}), Player.count({'banned': true}), function(members, online, chat, totalBroadcasts, general, wtb, wts, lr, pvm, totalBroadcastsAT, generalAT, wtbAT, wtsAT, lrAT, pvmAT, banned) {
+            let statsReply = '<center> <font color=#FFFF00> :::Darknet Statistics::: </font> </center> \n\n';
+            statsReply += '<img src=tdb://id:GFX_GUI_FRIENDLIST_SPLITTER>\n';
+            statsReply += '<font color=#00FFFF>Total Members:</font>' + members + '\n';
+            statsReply += '<font color=#00FFFF>Online Members:</font>' + online + '\n';
+            statsReply += '<font color=#00FFFF>Members in Private Chat:</font>' + chat + '\n';
+            statsReply += '<font color=#00FFFF>Banned:</font>' + banned + '\n';
+            statsReply += '<img src=tdb://id:GFX_GUI_FRIENDLIST_SPLITTER>\n\n';
+            statsReply += '<img src=tdb://id:GFX_GUI_FRIENDLIST_SPLITTER>\n';
+            statsReply += '<font color=#00FFFF>Total Broadcasts Last 30 days:</font>' + totalBroadcasts + '\n';
+            statsReply += '<font color=#00FFFF>General:</font>' + general + '\n';
+            statsReply += '<font color=#00FFFF>WTB:</font>' + wtb + '\n';
+            statsReply += '<font color=#00FFFF>WTS:</font>' + wts + '\n';
+            statsReply += '<font color=#00FFFF>Lootrights:</font>' + lr + '\n';
+            statsReply += '<font color=#00FFFF>Pvm:</font>' + pvm + '\n';
+            statsReply += '<img src=tdb://id:GFX_GUI_FRIENDLIST_SPLITTER>\n\n';
+            statsReply += '<img src=tdb://id:GFX_GUI_FRIENDLIST_SPLITTER>\n';
+            statsReply += '<font color=#00FFFF>Total Broadcasts All Time:</font>' + totalBroadcastsAT + '\n';
+            statsReply += '<font color=#00FFFF>General:</font>' + generalAT + '\n';
+            statsReply += '<font color=#00FFFF>WTB:</font>' + wtbAT + '\n';
+            statsReply += '<font color=#00FFFF>WTS:</font>' + wtsAT + '\n';
+            statsReply += '<font color=#00FFFF>Lootrights:</font>' + lr + '\n';
+            statsReply += '<font color=#00FFFF>Pvm:</font>' + pvmAT + '\n';
+            statsReply += '<img src=tdb://id:GFX_GUI_FRIENDLIST_SPLITTER>\n\n';
+            statsReply += '<img src=tdb://id:GFX_GUI_FRIENDLIST_SPLITTER>\n';
+            statsReply += '<font color=#00FFFF>Uptime:</font> ' + moment.duration(process.uptime(), 'seconds').humanize() + ' \n';
+            statsReply += '<img src=tdb://id:GFX_GUI_FRIENDLIST_SPLITTER>';
+            GlobalFn.PMUser(userId, GlobalFn.blob('Darknet Stats', statsReply));
+        }).catch(function(err) {
             winston.error('Statistics retrieval error: ' + err);
         });
     },
@@ -187,7 +160,12 @@ const coreCmd = {
             Player.findOneAndUpdate({
                 'name': userName
             }, {
-                'banned': true
+                'banned': true,
+                'generalChannel': false,
+                'lrChannel': false,
+                'wtbChannel': false,
+                'wtsChannel': false,
+                'pvmChannel': false
             }, function(err, result) {
                 if (err) {
                     winston.error(err);
@@ -315,11 +293,7 @@ const coreCmd = {
                                         'buddyList': 'main'
                                     }, function(err, result) {
                                         if (result >= 900) {
-                                            GlobalFn.replicaBuddyList({
-                                                buddyAction: 'add',
-                                                buddyId: idResult,
-                                                count: result
-                                            });
+                                            GlobalFn.replicaBuddyList({buddyAction: 'add', buddyId: idResult, count: result});
                                         } else {
                                             send_BUDDY_ADD(idResult);
                                         }
@@ -350,11 +324,7 @@ const coreCmd = {
                                         'buddyList': 'main'
                                     }, function(err, result) {
                                         if (result >= 900) {
-                                            GlobalFn.replicaBuddyList({
-                                                buddyAction: 'add',
-                                                buddyId: idResult,
-                                                count: result
-                                            });
+                                            GlobalFn.replicaBuddyList({buddyAction: 'add', buddyId: idResult, count: result});
                                         } else {
                                             send_BUDDY_ADD(idResult);
                                         }
@@ -406,23 +376,17 @@ const coreCmd = {
                                 'buddyList': 'main'
                             }, function(err, result) {
                                 if (result >= 900) {
-                                    GlobalFn.replicaBuddyList({
-                                        buddyAction: 'add',
-                                        buddyId: userId,
-                                        count: result
-                                    });
+                                    GlobalFn.replicaBuddyList({buddyAction: 'add', buddyId: userId, count: result});
                                 } else {
                                     send_BUDDY_ADD(userId);
                                 }
                             });
-                            GlobalFn.PMUser(userId, 'Welcome to Darknet, you have been subscribed to all channels, please take a look at our ' +
-                                GlobalFn.blob('Rules', rules) + ' and ' + GlobalFn.blob('Help.', helpMsg));
+                            GlobalFn.PMUser(userId, 'Welcome to Darknet, you have been subscribed to all channels, please take a look at our ' + GlobalFn.blob('Rules', rules) + ' and ' + GlobalFn.blob('Help.', helpMsg));
                         }
                     });
                 });
             } else if (result.level < GlobalFn.minLevel) {
-                GlobalFn.PMUser(userId, 'You need at least level ' +
-                    GlobalFn.minLevel + ' to register', 'warning');
+                GlobalFn.PMUser(userId, 'You need at least level ' + GlobalFn.minLevel + ' to register', 'warning');
             } else if (result.accessLevel >= 1) {
                 GlobalFn.PMUser(userId, 'You are already a member.', 'warning');
             } else {
@@ -447,18 +411,12 @@ const coreCmd = {
                             'buddyList': 'main'
                         }, function(err, result) {
                             if (result >= 900) {
-                                GlobalFn.replicaBuddyList({
-                                    buddyAction: 'add',
-                                    buddyId: userId,
-                                    count: result
-                                });
+                                GlobalFn.replicaBuddyList({buddyAction: 'add', buddyId: userId, count: result});
                             } else {
                                 send_BUDDY_ADD(userId);
                             }
                         });
-                        GlobalFn.PMUser(userId, 'Welcome to Darknet ' + result.name +
-                            ', you have been subscribed to all channels, please take a look at our ' +
-                            GlobalFn.blob('Rules', rules) + ' and ' + GlobalFn.blob('Help.', helpMsg));
+                        GlobalFn.PMUser(userId, 'Welcome to Darknet ' + result.name + ', you have been subscribed to all channels, please take a look at our ' + GlobalFn.blob('Rules', rules) + ' and ' + GlobalFn.blob('Help.', helpMsg));
                     }
                 });
             }
@@ -525,11 +483,7 @@ const coreCmd = {
                             if (result.buddyList === 'main') {
                                 send_BUDDY_REMOVE(result._id);
                             } else {
-                                GlobalFn.replicaBuddyList({
-                                    buddyAction: 'rem',
-                                    replica: result.buddyList,
-                                    buddyId: result._id
-                                });
+                                GlobalFn.replicaBuddyList({buddyAction: 'rem', replica: result.buddyList, buddyId: result._id});
                             }
                             send_BUDDY_REMOVE(result._id);
                             GlobalFn.PMUser(userId, userName + ' is no longer a member.', 'success');
@@ -568,11 +522,7 @@ const coreCmd = {
                         if (result.buddyList === 'main') {
                             send_BUDDY_REMOVE(userId);
                         } else {
-                            GlobalFn.replicaBuddyList({
-                                buddyAction: 'rem',
-                                replica: result.buddyList,
-                                buddyId: userId
-                            });
+                            GlobalFn.replicaBuddyList({buddyAction: 'rem', replica: result.buddyList, buddyId: userId});
                         }
                         GlobalFn.PMUser(userId, 'You are no longer a member and have been unsubscribed from all channels!', 'success');
                     }
@@ -776,56 +726,33 @@ const coreCmd = {
     },
     history: function(userId, args) {
         if (!args[0]) {
-            History
-                .find()
-                .sort({
-                    createdAt: 'descending'
-                })
-                .limit(20)
-                .exec(function(err, result) {
-                    if (err) {
-                        winston.error(err);
-                    } else {
-                        let historyMsg = '<center> <font color=#FFFF00> :::Darknet History::: </font> </center> \n\n';
-                        for (let i = 0, len = result.length; i < len; i++) {
-                            historyMsg += '<font color=#00FFFF>' + _.capitalize(result[i].channel) + ': </font>';
-                            historyMsg += result[i].message + '<font color=#00FFFF> [' +
-                                result[i].name + ']</font> - ' +
-                                moment(result[i].createdAt).fromNow() + '\n';
-                            historyMsg += '<img src=tdb://id:GFX_GUI_FRIENDLIST_SPLITTER>\n\n';
-                        }
-                        GlobalFn.PMUser(userId, GlobalFn.blob('History', historyMsg));
+            History.find().sort({createdAt: 'descending'}).limit(20).exec(function(err, result) {
+                if (err) {
+                    winston.error(err);
+                } else {
+                    let historyMsg = '<center> <font color=#FFFF00> :::Darknet History::: </font> </center> \n\n';
+                    for (let i = 0, len = result.length; i < len; i++) {
+                        historyMsg += '<font color=#00FFFF>' + _.capitalize(result[i].channel) + ': </font>';
+                        historyMsg += result[i].message + '<font color=#00FFFF> [' + result[i].name + ']</font> - ' + moment(result[i].createdAt).fromNow() + '\n';
+                        historyMsg += '<img src=tdb://id:GFX_GUI_FRIENDLIST_SPLITTER>\n\n';
                     }
-                });
-        } else if (args[0].toLowerCase() === 'wts' ||
-            args[0].toLowerCase() === 'wtb' ||
-            args[0].toLowerCase() === 'general' ||
-            args[0].toLowerCase() === 'pvm' ||
-            args[0].toLowerCase() === 'lr'
-        ) {
-            History
-                .find({
-                    channel: args[0].toLowerCase()
-                })
-                .sort({
-                    createdAt: 'descending'
-                })
-                .limit(20)
-                .exec(function(err, result) {
-                    if (err) {
-                        winston.error(err);
-                    } else {
-                        let historyMsg = '<center> <font color=#FFFF00> :::Darknet History::: </font> </center> \n\n';
-                        for (let i = 0, len = result.length; i < len; i++) {
-                            historyMsg += '<font color=#00FFFF>' + _.capitalize(result[i].channel) + ': </font>';
-                            historyMsg += result[i].message.replace(/[^\x00-\x7F]/gmi, "") + '<font color=#00FFFF> [' +
-                                result[i].name + ']</font> - ' +
-                                moment(result[i].createdAt).fromNow() + '\n\n';
-                            historyMsg += '<img src=tdb://id:GFX_GUI_FRIENDLIST_SPLITTER>\n\n';
-                        }
-                        GlobalFn.PMUser(userId, GlobalFn.blob('History', historyMsg));
+                    GlobalFn.PMUser(userId, GlobalFn.blob('History', historyMsg));
+                }
+            });
+        } else if (args[0].toLowerCase() === 'wts' || args[0].toLowerCase() === 'wtb' || args[0].toLowerCase() === 'general' || args[0].toLowerCase() === 'pvm' || args[0].toLowerCase() === 'lr') {
+            History.find({channel: args[0].toLowerCase()}).sort({createdAt: 'descending'}).limit(20).exec(function(err, result) {
+                if (err) {
+                    winston.error(err);
+                } else {
+                    let historyMsg = '<center> <font color=#FFFF00> :::Darknet History::: </font> </center> \n\n';
+                    for (let i = 0, len = result.length; i < len; i++) {
+                        historyMsg += '<font color=#00FFFF>' + _.capitalize(result[i].channel) + ': </font>';
+                        historyMsg += result[i].message.replace(/[^\x00-\x7F]/gmi, "") + '<font color=#00FFFF> [' + result[i].name + ']</font> - ' + moment(result[i].createdAt).fromNow() + '\n\n';
+                        historyMsg += '<img src=tdb://id:GFX_GUI_FRIENDLIST_SPLITTER>\n\n';
                     }
-                });
+                    GlobalFn.PMUser(userId, GlobalFn.blob('History', historyMsg));
+                }
+            });
         } else {
             GlobalFn.PMUser(userId, 'Invalid channel selected.', 'warning');
         }
@@ -919,59 +846,39 @@ const coreCmd = {
                 if (err) {
                     winston.error(err);
                 } else {
-                    History
-                        .find({
-                            'name': playerInfo.name
-                        })
-                        .sort({
-                            createdAt: 'descending'
-                        })
-                        .limit(20)
-                        .exec(function(err, result) {
-                            if (err) {
-                                winston.error(err);
-                                GlobalFn.PMUser(userId, 'Database operation failed.', 'error');
-                            } else {
-                                let historyMsg = '<center> <font color=#FFFF00> :::' + playerInfo.name + '\'s Broadcast History::: </font> </center> \n\n';
-                                for (let i = 0, len = result.length; i < len; i++) {
-                                    historyMsg += '<font color=#00FFFF>' + _.capitalize(result[i].channel) + ': </font>';
-                                    historyMsg += result[i].message.replace(/[^\x00-\x7F]/gmi, "") + '<font color=#00FFFF> [' +
-                                        result[i].name + ']</font> - ' +
-                                        moment(result[i].createdAt).fromNow() + '\n\n';
-                                    historyMsg += '<img src=tdb://id:GFX_GUI_FRIENDLIST_SPLITTER>\n\n';
-                                }
-                                GlobalFn.PMUser(userId, GlobalFn.blob(playerInfo.name + '\'s History', historyMsg));
+                    History.find({'name': playerInfo.name}).sort({createdAt: 'descending'}).limit(20).exec(function(err, result) {
+                        if (err) {
+                            winston.error(err);
+                            GlobalFn.PMUser(userId, 'Database operation failed.', 'error');
+                        } else {
+                            let historyMsg = '<center> <font color=#FFFF00> :::' + playerInfo.name + '\'s Broadcast History::: </font> </center> \n\n';
+                            for (let i = 0, len = result.length; i < len; i++) {
+                                historyMsg += '<font color=#00FFFF>' + _.capitalize(result[i].channel) + ': </font>';
+                                historyMsg += result[i].message.replace(/[^\x00-\x7F]/gmi, "") + '<font color=#00FFFF> [' + result[i].name + ']</font> - ' + moment(result[i].createdAt).fromNow() + '\n\n';
+                                historyMsg += '<img src=tdb://id:GFX_GUI_FRIENDLIST_SPLITTER>\n\n';
                             }
-                        });
+                            GlobalFn.PMUser(userId, GlobalFn.blob(playerInfo.name + '\'s History', historyMsg));
+                        }
+                    });
                 }
 
             });
         } else {
             let userName = _.capitalize(args[0]);
-            History
-                .find({
-                    'name': userName
-                })
-                .sort({
-                    createdAt: 'descending'
-                })
-                .limit(30)
-                .exec(function(err, result) {
-                    if (err) {
-                        winston.error(err);
-                        GlobalFn.PMUser(userId, 'Database operation failed.', 'error');
-                    } else {
-                        let historyMsg = '<center> <font color=#FFFF00> :::' + userName + '\'s Broadcast History::: </font> </center> \n\n';
-                        for (let i = 0, len = result.length; i < len; i++) {
-                            historyMsg += '<font color=#00FFFF>' + _.capitalize(result[i].channel) + ': </font>';
-                            historyMsg += result[i].message.replace(/[^\x00-\x7F]/gmi, "") + '<font color=#00FFFF> [' +
-                                result[i].name + ']</font> - ' +
-                                moment(result[i].createdAt).fromNow() + '\n\n';
-                            historyMsg += '<img src=tdb://id:GFX_GUI_FRIENDLIST_SPLITTER>\n\n';
-                        }
-                        GlobalFn.PMUser(userId, GlobalFn.blob(userName + '\'s History', historyMsg));
+            History.find({'name': userName}).sort({createdAt: 'descending'}).limit(30).exec(function(err, result) {
+                if (err) {
+                    winston.error(err);
+                    GlobalFn.PMUser(userId, 'Database operation failed.', 'error');
+                } else {
+                    let historyMsg = '<center> <font color=#FFFF00> :::' + userName + '\'s Broadcast History::: </font> </center> \n\n';
+                    for (let i = 0, len = result.length; i < len; i++) {
+                        historyMsg += '<font color=#00FFFF>' + _.capitalize(result[i].channel) + ': </font>';
+                        historyMsg += result[i].message.replace(/[^\x00-\x7F]/gmi, "") + '<font color=#00FFFF> [' + result[i].name + ']</font> - ' + moment(result[i].createdAt).fromNow() + '\n\n';
+                        historyMsg += '<img src=tdb://id:GFX_GUI_FRIENDLIST_SPLITTER>\n\n';
                     }
-                });
+                    GlobalFn.PMUser(userId, GlobalFn.blob(userName + '\'s History', historyMsg));
+                }
+            });
         }
     },
     admins: function(userId) {
@@ -991,8 +898,7 @@ const coreCmd = {
                     GlobalFn.PMUser(userId, 'Database operation failed.', 'error');
                 } else {
                     if (!player) {
-                        GlobalFn.PMUser(userId, 'I have never seen <font color=#FF0000>' +
-                            userName + '</font>!', 'warning');
+                        GlobalFn.PMUser(userId, 'I have never seen <font color=#FF0000>' + userName + '</font>!', 'warning');
                     } else {
                         // Check if player is online.
                         Online.findOne({
@@ -1004,18 +910,10 @@ const coreCmd = {
                             } else {
                                 // If player is NOT online.
                                 if (result === null) {
-                                    GlobalFn.PMUser(userId, 'Player <font color=#FF0000>' +
-                                        userName +
-                                        '</font> Was last seen on ' + player.lastseen +
-                                        ' about  <font color=#FF0000>' +
-                                        moment(player.lastseen).fromNow() + '</font>!');
+                                    GlobalFn.PMUser(userId, 'Player <font color=#FF0000>' + userName + '</font> Was last seen on ' + player.lastseen + ' about  <font color=#FF0000>' + moment(player.lastseen).fromNow() + '</font>!');
                                 } else {
                                     // If PLayer is online.
-                                    GlobalFn.PMUser(userId, 'Player <font color=#FF0000>' +
-                                        userName + '</font> is <font color=#00FF00>Online</font> now!' +
-                                        ' Logged on at ' + result.createdAt +
-                                        ' about <font color=#FF0000>' +
-                                        moment(result.createdAt).fromNow() + '</font>!');
+                                    GlobalFn.PMUser(userId, 'Player <font color=#FF0000>' + userName + '</font> is <font color=#00FF00>Online</font> now!' + ' Logged on at ' + result.createdAt + ' about <font color=#FF0000>' + moment(result.createdAt).fromNow() + '</font>!');
                                 }
                             }
                         });
@@ -1041,7 +939,12 @@ const coreCmd = {
                     Player.updateOne({
                         'name': userName
                     }, {
-                        'banned': true
+                        'banned': true,
+                        'generalChannel': false,
+                        'lrChannel': false,
+                        'wtbChannel': false,
+                        'wtsChannel': false,
+                        'pvmChannel': false
                     }, function(err) {
                         if (err) {
                             winston.error(err);
@@ -1091,12 +994,79 @@ const coreCmd = {
                     if (err) {
                         winston.error(err);
                     } else {
-                        GlobalFn.PMUser(userId, 'One warning was removed from ' +
-                            userName + '\'s account.', 'success');
+                        GlobalFn.PMUser(userId, 'One warning was removed from ' + userName + '\'s account.', 'success');
                     }
                 });
             }
         });
+    },
+    report: function(userId, args) {
+        if (!args[0]) {
+            return GlobalFn.PMUser(userId, 'Invalid request!', 'warning');
+        }
+        // Get sender's username
+        Player.findOne({
+            '_id': userId
+        }, function(err, result) {
+            if (err) {
+                return winston.error('Unable to save report: ' + userId + ': ' + args + ' ' + err)
+            }
+            // Save report to database
+            const NewReport = new Report();
+            NewReport.sentBy = result.name;
+            NewReport.message = args.join(' ');
+            NewReport.save(function(err) {
+                if (err) {
+                    return winston.error('Unable to save report: ' + userId + ': ' + args + ' ' + err)
+                    GlobalFn.PMUser(userId, 'Unable to save report, please try again or contact an admin.', 'error');
+                } else {
+                    GlobalFn.PMUser(userId, 'Successfully received the report, thank you!', 'success');
+                }
+            });
+        });
+    },
+    viewreports: function(userId, args) {
+        if (!args || isNaN(args)) {
+            Report.find({}).sort({createdAt: 'descending'}).limit(30).exec(function(err, result) {
+                if (err) {
+                    winston.error(err);
+                    GlobalFn.PMUser(userId, 'Database operation failed.', 'error');
+                } else {
+                    let reportMsg = '<center> <font color=#FFFF00> ::: Report History::: </font> </center> \n\n';
+                    for (let i = 0, len = result.length; i < len; i++) {
+                        reportMsg += '<font color=#00FFFF>' + _.capitalize(result[i].sentBy) + ': </font>';
+                        reportMsg += result[i].message.replace(/[^\x00-\x7F]/gmi, "") + '<font color=#00FFFF></font> - ' + moment(result[i].createdAt).fromNow() + '\n\n';
+                        reportMsg += '<img src=tdb://id:GFX_GUI_FRIENDLIST_SPLITTER>\n\n';
+                    }
+                    GlobalFn.PMUser(userId, GlobalFn.blob('Latest Reports', reportMsg));
+                }
+            });
+        } else {
+            Report.find({}).sort({createdAt: 'descending'}).limit(args[0]).exec(function(err, result) {
+                if (err) {
+                    winston.error(err);
+                    GlobalFn.PMUser(userId, 'Database operation failed.', 'error');
+                } else {
+                    let reportMsg = '<center> <font color=#FFFF00> ::: Report History::: </font> </center> \n\n';
+                    for (let i = 0, len = result.length; i < len; i++) {
+                        reportMsg += '<font color=#00FFFF>' + _.capitalize(result[i].sentBy) + ': </font>';
+                        reportMsg += result[i].message.replace(/[^\x00-\x7F]/gmi, "") + '<font color=#00FFFF></font> - ' + moment(result[i].createdAt).fromNow() + '\n\n';
+                        reportMsg += '<img src=tdb://id:GFX_GUI_FRIENDLIST_SPLITTER>\n\n';
+                    }
+                    GlobalFn.PMUser(userId, GlobalFn.blob('Latest Reports', reportMsg));
+                }
+            });
+        }
+    },
+    delreports: function(userId) {
+        Report.remove({}, function(err) {
+            if (err) {
+                return winston.error('Unable to clear reports: ' + err)
+                GlobalFn.PMUser(userId, 'Unable to clear reports.', 'error');
+            } else {
+                GlobalFn.PMUser(userId, 'Successfully cleared the reports!', 'success');
+            }
+        })
     }
 };
 
@@ -1120,7 +1090,7 @@ const ValidSettings = {
 };
 
 var about = '<center> <font color=#FFFF00> :::Nephbot - Darknet::: </font> </center> \n\n';
-about += '<font color=#00FFFF>Version:</font> 0.3.3 \n';
+about += '<font color=#00FFFF>Version:</font> 0.3.4 \n';
 about += '<font color=#00FFFF>By:</font> Nepherius \n';
 about += '<font color=#00FFFF>On:</font>' + process.platform + '\n';
 about += '<font color=#00FFFF>In:</font> Node v' + process.versions.node + '\n';
@@ -1129,7 +1099,6 @@ about += '<font color=#00FFFF>Contact:</font> nepherius@live.com \n';
 about += '<font color=#00FFFF>Source Code</font> https://github.com/Nepherius/Darknet \n\n';
 
 about += '<font color=#00FFFF>Special Thanks:</font> To all the people that worked on the original AO Chat Bots, Nephbot would not be possible without them.    \n';
-
 
 helpMsg = '<center> <font color=#FFFF00> :::General Help::: </font> </center> \n\n';
 helpMsg += '<font color=#00FFFF> [arg] <- This is an optional argument  </font>' + '\n\n';
@@ -1169,7 +1138,6 @@ rules += '<font color=#00FFFF>For any other game related messages that don\'t ma
 rules += '<font color=#FFC94D > Private Group(Chat): </font>';
 rules += '<font color=#00FFFF> This chat only exists to provide an alternative for private messages, it should NOT be used for chatting. DO NOT send any messages on this chat or you WILL be Banned!\n\n';
 rules += '<font color=#FF0000>All bans are PERMANENT!</font> \n';
-
 
 // Export core commands
 module.exports = coreCmd;

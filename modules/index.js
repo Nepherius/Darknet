@@ -20,7 +20,6 @@ Cmd.lr = lr;
 Cmd.lock = lock;
 Cmd.unlock = unlock;
 Cmd.pvm = pvm;
-//Cmd.replicastatus = replicastatus;
 
 //MISC
 
@@ -233,6 +232,24 @@ let cmdList = [{
     description: 'Removes a warning to a players account.',
     help: 'remwarning < player name >',
     accessRequired: 2
+},
+{
+    cmdName: 'report',
+    description: 'Report a player, please include a timestamp or the message send by the person you are reporting.',
+    help: 'report < message >',
+    accessRequired: 1
+},
+{
+    cmdName: 'viewreports',
+    description: 'View latest reports.',
+    help: 'viewreports [number of reports in descending order]',
+    accessRequired: 2
+},
+{
+    cmdName: 'delreports',
+    description: 'Delete all reports.',
+    help: 'delreports',
+    accessRequired: 3
 }
 ];
 

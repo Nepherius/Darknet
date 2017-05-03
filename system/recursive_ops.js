@@ -2,9 +2,7 @@ const winston = require('winston');
 const rfr = require('rfr');
 const moment = require('moment');
 const GlobalFn = rfr('system/globals.js');
-//const Start = rfr('start');
 const configDB = rfr('./config/database');
-
 const mongoose = require('bluebird').promisifyAll(require('mongoose'));
 
 // configuration ===============================================================

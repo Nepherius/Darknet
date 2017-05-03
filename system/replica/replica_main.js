@@ -10,7 +10,6 @@ const mongoose = require('mongoose');
 const moment = require('moment');
 const configDB = rfr('./config/database');
 
-
 // configuration ===============================================================
 
 const connect = rfr('./system/core/connect');
@@ -27,38 +26,31 @@ const Online = rfr('./config/models/online.js');
 winston.configure({
     level: 'info',
     transports: [
-        new(winston.transports.Console)({
-            colorize: true,
-            'timestamp': true,
-            handleExceptions: true,
-            humanReadableUnhandledException: true
-        }),
-        new(require('winston-daily-rotate-file'))({
-            filename: './log',
-            prepend: true,
-            handleExceptions: true,
-            humanReadableUnhandledException: true
-        })
+        new(winston.transports.Console)({colorize: true, 'timestamp': true, handleExceptions: true, humanReadableUnhandledException: true}),
+        new(require('winston-daily-rotate-file'))({filename: './log', prepend: true, handleExceptions: true, humanReadableUnhandledException: true})
     ]
 });
 
-mongoose.connect(configDB.url, function(err) {
-  if (err) {
-    return winston.error(err)
-  } else {
-    winston.debug('Replica Database connection established');
-  }
+mongoose.connect(configDB.url, {
+    server: {
+        reconnectTries: Number.MAX_VALUE
+    }
+}, function(err) {
+    if (err) {
+        return winston.error(err)
+    } else {
+        winston.info('Replica Database connection established');
+    }
 });
 
 process.on('SIGINT', function() {
-  mongoose.connection.close(function () {
-    winston.debug('Terminating replica db connection');
-    process.exit(0);
-  });
+    mongoose.connection.close(function() {
+        winston.debug('Terminating replica db connection');
+        process.exit(0);
+    });
 });
 
 // configuration ===============================================================
-
 
 const start = startBot;
 const GlobalFn = {
@@ -178,9 +170,7 @@ const GlobalFn = {
 
 Replica.findOneAndUpdate({
     'replicaname': process.argv[2]
-}, {
-    'ready': true
-}).then(function(result) {
+}, {'ready': true}).then(function(result) {
     GlobalFn.botname = result.replicaname;
     GlobalFn.replicaname = result.replicaname;
     GlobalFn.Login = result.username;
@@ -211,9 +201,7 @@ process.on('message', function(Obj) {
         for (let i = 0, len = Obj.playerArray.length; i < len; i++) {
             //Fail safe for online_filter
             if (Obj.playerArray[i]._id !== null && Obj.playerArray[i]._id.id !== null) {
-                broadcastMessage(i, Obj.playerArray[i]._id._id, Prefix[Obj.channel] +
-                    '<font color="#f7892a">' + Obj.message + '</font>' +
-                    ' [<a href="user://' + Obj.sender + '">' + Obj.sender + '</a>]');
+                broadcastMessage(i, Obj.playerArray[i]._id._id, Prefix[Obj.channel] + '<font color="#f7892a">' + Obj.message + '</font>' + ' [<a href="user://' + Obj.sender + '">' + Obj.sender + '</a>]');
             }
         }
         // Assuming each message is distributed 1.4 seconds apart
@@ -243,12 +231,15 @@ function broadcastMessage(i, userId, message) {
 const startTime = process.hrtime(); // Used later to prevent login PM spam
 
 function pack_key(key) {
-    return pack.pack(
+    return pack.pack([
         [
-            ['I', 0],
-            ['S', GlobalFn.Login],
-            ['S', key]
-        ]);
+            'I', 0
+        ],
+        [
+            'S', GlobalFn.Login
+        ],
+        ['S', key]
+    ]);
 }
 handle[auth.AOCP.LOGIN_SEED] = function(payload) {
     winston.debug('Login_SEED');
@@ -277,9 +268,7 @@ handle[auth.AOCP.LOGIN_CHARLIST] = function(data) {
         winston.error(GlobalFn.botname + ' was not found on this account!');
         process.exitCode = 1;
     }
-    winston.debug({
-        botId: GlobalFn.botId
-    });
+    winston.debug({botId: GlobalFn.botId});
     data = pack.pack([
         ['I', GlobalFn.botId]
     ]);
@@ -287,14 +276,12 @@ handle[auth.AOCP.LOGIN_CHARLIST] = function(data) {
     s.write(pp);
 };
 
-
-
 /*************** RESPONSE HANDLERS ***************/
 handle[auth.AOCP.LOGIN_ERROR] = function(data, u) {
     let loginError = u.S();
     pack.unpackError(data);
-    winston.error(loginError);
-    GlobalFn.die();
+    winston.error(process.argv[2] + ' ' +  loginError);
+    process.exitCode = 1;
 };
 
 handle[auth.AOCP.LOGIN_OK] = function() {
@@ -316,26 +303,22 @@ handle[auth.AOCP.CLIENT_NAME] = function(data, u) {
     }, function(err, result) {
         if (err) {
             winston.error(err);
-        } else if (result === null || result === undefined ||
-            (moment().subtract(24, 'hours').isAfter(moment(result.lastupdate)) &&
-                process.hrtime(startTime)[0] > 20)) {
+        } else if (result === null || result === undefined || (moment().subtract(24, 'hours').isAfter(moment(result.lastupdate)) && process.hrtime(startTime)[0] > 20)) {
             GlobalFn.getPlayerData(userId, userName);
         } else {
-            winston.debug('No update for: ' + userId + ' already updated on ' +
-                result.lastupdate);
+            winston.debug('No update for: ' + userId + ' already updated on ' + result.lastupdate);
         }
     });
 };
 
 handle[auth.AOCP.BUDDY_ADD] = function(data, u) { // handles online/offline status too
     let userId = u.I();
-    var userStatus = u.I() == 1 ? 'online' : 'offline';
+    var userStatus = u.I() == 1
+        ? 'online'
+        : 'offline';
     var unknownPart = u.S();
     u.done();
-    winston.debug({
-        userId: userId,
-        userStatus: userStatus
-    });
+    winston.debug({userId: userId, userStatus: userStatus});
     if (userStatus === 'online') {
         buddyStatus.emit('online', userId, userStatus);
     } else if (userStatus === 'offline') {
@@ -391,11 +374,8 @@ handle[auth.AOCP.GROUP_ANNOUNCE] = function(data, u) {
 handle[auth.AOCP.PING] = function(data, u) {
     var Pong = u.S();
     u.done();
-    winston.debug({
-        Pong: Pong
-    });
+    winston.debug({Pong: Pong});
 };
-
 
 /*************** Requests ***************/
 
@@ -403,48 +383,48 @@ global.send = function(type, spec) {
     s.write(auth.assemble_packet(type, pack.pack(spec)));
 };
 
-
 global.send_MESSAGE_PRIVATE = function(userId, text) {
     winston.info('%s: %s -> %d', process.argv[2], text, userId);
-    send(
-        auth.AOCP.MESSAGE_PRIVATE, [
-            ['I', userId],
-            ['S', text],
-            ['S', '\0']
-        ]);
+    send(auth.AOCP.MESSAGE_PRIVATE, [
+        [
+            'I', userId
+        ],
+        [
+            'S', text
+        ],
+        ['S', '\0']
+    ]);
 };
 
 global.send_ONLINE_SET = function(arg) {
     winston.info('SET ONlINE');
-    send(
-        auth.AOCP.ONLINE_SET, [
-            ['I', arg]
-        ]);
+    send(auth.AOCP.ONLINE_SET, [
+        ['I', arg]
+    ]);
 };
 
 global.send_BUDDY_ADD = function(userId) {
     winston.info('%s -> BUDDY_ADD_id %d', process.argv[2], userId);
-    send(
-        auth.AOCP.BUDDY_ADD, [
-            ['I', userId],
-            ['S', '\u0001']
-        ]);
+    send(auth.AOCP.BUDDY_ADD, [
+        [
+            'I', userId
+        ],
+        ['S', '\u0001']
+    ]);
 };
 
 global.send_BUDDY_REMOVE = function(userId) {
     winston.info('%s -> BUDDY_REMOVE_id %d', process.argv[2], userId);
-    send(
-        auth.AOCP.BUDDY_REMOVE, [
-            ['I', userId]
-        ]);
+    send(auth.AOCP.BUDDY_REMOVE, [
+        ['I', userId]
+    ]);
 };
 
 global.send_PING = function() {
     winston.debug('Ping');
-    send(
-        auth.AOCP.PING, [
-            ['S', 'Ping']
-        ]);
+    send(auth.AOCP.PING, [
+        ['S', 'Ping']
+    ]);
 };
 // Friend(Buddy) List
 buddyStatus.on('online', function(userId, userStatus) {
@@ -459,10 +439,7 @@ buddyStatus.on('online', function(userId, userStatus) {
             winston.debug('Updated lastseen of user: ' + userId);
             if (result !== null && result.autoinvite && result.banned === false) {
                 winston.debug('Sending invite request for user: ' + userId);
-                process.send({
-                    type: 'invite',
-                    userId: userId
-                });
+                process.send({type: 'invite', userId: userId});
             }
         }
     });
