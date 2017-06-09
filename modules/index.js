@@ -250,6 +250,24 @@ let cmdList = [{
     description: 'Delete all reports.',
     help: 'delreports',
     accessRequired: 3
+},
+{
+    cmdName: 'banorg',
+    description: 'Add an organization to the ban list.',
+    help: 'ban < org name >',
+    accessRequired: 99
+},
+{
+    cmdName: 'unbanorg',
+    description: 'Remove an organiaztion from the ban list.',
+    help: 'unban < org name > ',
+    accessRequired: 99
+},
+{
+    cmdName: 'viewadmins',
+    description: 'Display a list with all the admins.',
+    help: 'viewadmins ',
+    accessRequired: 2
 }
 ];
 

@@ -16,7 +16,8 @@ const MsgQueue = rfr('config/models/message_queue.js');
 const History = rfr('config/models/history');
 const Command = rfr('config/models/commands.js');
 const Settings = rfr('config/models/settings.js');
-const Report = rfr('config/models/report.js')
+const Report = rfr('config/models/report.js');
+const OrgBanList = rfr('config/models/orgbanlist.js');
 
 const ValidChannels = {
     general: 'generalChannel',
@@ -1067,6 +1068,52 @@ const coreCmd = {
                 GlobalFn.PMUser(userId, 'Successfully cleared the reports!', 'success');
             }
         })
+    },
+    banorg: function(userId,orgName) {
+      if (!orgName) {
+        GlobalFn.PMUser(userId, 'An organization name is required!', 'warning');
+      } else {
+        addOrgBan = new OrgBanList();
+        addOrgBan.org_name = orgName.join(' ');
+        addOrgBan.by = userId;
+        addOrgBan.save(function(err){
+          if (err) {
+            winston.error('Unable to add org ban ' + err);
+            GlobalFn.PMUser(userId, 'Unable to add org ban!', 'error');
+          } else {
+            GlobalFn.PMUser(userId, 'Successfully banned ' + orgName.join(' '), 'success');
+          }
+        })
+      }
+    },
+    unbanorg: function(userId, orgName) {
+      if (!orgName) {
+        GlobalFn.PMUser(userId, 'An organization name is required!', 'warning');
+      } else {
+        OrgBanList.remove({org_name: orgName.join(' ')},(function(err){
+          if (err) {
+            winston.error('Unable to add org ban ' + err);
+            GlobalFn.PMUser(userId, 'Unable to add org ban!', 'error');
+          } else {
+            GlobalFn.PMUser(userId, 'Successfully unbanned ' + orgName.join(' '), 'success');
+          }
+        }))
+      }
+    },
+    viewadmins: function(userId) {
+      Player.find({accessLevel: {$gte: 2}},function(err,result) {
+        if (err) {
+          winston.error(err);
+        } else {
+          let adminListMsg = '<center> <font color=#FFFF00> ::: Darknet Admin List ::: </font> </center> \n\n';
+          for (let i = 0, len = result.length; i < len; i++) {
+              adminListMsg += 'Name: <font color=#00FFFF>' + result[i].name + ' </font>\n';
+              adminListMsg += 'Access Level: <font color=#00FFFF>' + result[i].accessLevel + ' </font>\n';
+              adminListMsg += '<img src=tdb://id:GFX_GUI_FRIENDLIST_SPLITTER>\n\n';
+          }
+          GlobalFn.PMUser(userId, GlobalFn.blob('Darknet Admin List', adminListMsg));
+        }
+      })
     }
 };
 
@@ -1090,7 +1137,7 @@ const ValidSettings = {
 };
 
 var about = '<center> <font color=#FFFF00> :::Nephbot - Darknet::: </font> </center> \n\n';
-about += '<font color=#00FFFF>Version:</font> 0.3.4 \n';
+about += '<font color=#00FFFF>Version:</font> 0.3.5 \n';
 about += '<font color=#00FFFF>By:</font> Nepherius \n';
 about += '<font color=#00FFFF>On:</font>' + process.platform + '\n';
 about += '<font color=#00FFFF>In:</font> Node v' + process.versions.node + '\n';

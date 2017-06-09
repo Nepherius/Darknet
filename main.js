@@ -19,6 +19,7 @@ const Command = require('./config/models/commands.js');
 const Player = require('./config/models/player.js');
 const Chat = require('./config/models/prvGroup.js');
 const Online = require('./config/models/online.js');
+const OrgBanList = require('./config/models/orgbanlist.js');
 
 
 
@@ -414,41 +415,56 @@ incMessage.on('pm', function(userId, message) {
                 }),
                 Player.findByIdAsync(userId),
                 function(cmd, user) {
-                    // Search for user in DB
+                    // Check if the user is banned
                     if (user !== null && user.banned) {
-                      if (user.gender === 'Male') {
+                      if (user.gender === 'Male' || user.gender === 'Atrox' ) {
                         GlobalFn.PMUser(userId, 'You\'ve been a naughty boy, access denied!', 'error');
                       } else {
                         GlobalFn.PMUser(userId, 'You\'ve been a naughty girl, access denied!', 'error');
                       }
-                    } else if (cmd === null || cmd.length === 0) {
-                        GlobalFn.PMUser(userId, 'Command not found!', 'warning');
-                    } else if (cmd.disabled) {
-                        GlobalFn.PMUser(userId, 'This command has been disabled.', 'warning');
-                    } else if (user === null || user.length === 0) {
-                        // If user is not found an async lookup is happening
-                        // and db is being filled with the default values:
-                        // Access Level = 0
-                        if (cmd.accessRequired === 0) {
-                            let args = [];
-                            for (let i = 1; i < message.split(' ').length; i++) {
-                                args.push(message.split(' ')[i]);
-                            }
-                            Cmd[cmdName](userId, args);
+                    }
+                    else {
+                      // Check if the user's organization is banned
+                      OrgBanList.findOne({org_name: user.org}, function(err, result){
+                        if(err) {
+                          winston.error(err);
+                        // If org is banned stop here
+                        } else if (result !== null) {
+                          GlobalFn.PMUser(userId, 'Due to the bad behaviour of some of your org\'s members your access has been restricted', 'error');
+                          // If org is not banned continue the checks
                         } else {
-                            GlobalFn.PMUser(userId, 'Access Denied!', 'error');
+                          if (cmd === null || cmd.length === 0) {
+                             GlobalFn.PMUser(userId, 'Command not found!', 'warning');
+                         } else if (cmd.disabled) {
+                             GlobalFn.PMUser(userId, 'This command has been disabled.', 'warning');
+                         } else if (user === null || user.length === 0) {
+                             // If user is not found an async lookup is happening
+                             // and db is being filled with the default values:
+                             // Access Level = 0
+                             if (cmd.accessRequired === 0) {
+                                 let args = [];
+                                 for (let i = 1; i < message.split(' ').length; i++) {
+                                     args.push(message.split(' ')[i]);
+                                 }
+                                 Cmd[cmdName](userId, args);
+                             } else {
+                                 GlobalFn.PMUser(userId, 'Access Denied!', 'error');
+                             }
+                         } else if (user.name.toLowerCase() !== GlobalFn.owner.toLowerCase() && cmd.accessRequired > user.accessLevel) {
+                             GlobalFn.PMUser(userId, 'Access Denied!', 'error');
+                         } else { // All checks passed, exec command
+                             let args = [];
+                             for (let i = 1; i < message.split(' ').length; i++) {
+                                 args.push(message.split(' ')[i]);
+                             }
+                             Cmd[cmdName](userId, args);
+                         }
                         }
-                    } else if (user.name.toLowerCase() !== GlobalFn.owner.toLowerCase() && cmd.accessRequired > user.accessLevel) {
-                        GlobalFn.PMUser(userId, 'Access Denied!', 'error');
-                    } else { // All checks passed, exec command
-                        let args = [];
-                        for (let i = 1; i < message.split(' ').length; i++) {
-                            args.push(message.split(' ')[i]);
-                        }
-                        Cmd[cmdName](userId, args);
+                      })
                     }
                 }).catch(function(err) {
                 winston.error('Private Message: ' + err);
+                GlobalFn.PMUser(userId, 'Something went wrong, please try again.', 'error');
             });
 
         }
