@@ -180,7 +180,6 @@ GlobalFn.retrieveSplitAndBroadcast = function() {
                             }
                         }
                     });
-
                     // Add the message details to history.
                     let addToHistory = new History();
                     addToHistory.name = msgObj.name;

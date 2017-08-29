@@ -1,0 +1,29 @@
+{
+    "env": {
+        "browser": false,
+        "es6": true,
+        "jquery": false,
+        "node": true
+    },
+    "extends": "eslint:recommended",
+    "parserOptions": {
+        "ecmaFeatures": {
+            "jsx": false
+        },
+        "sourceType": "module"
+    },
+
+    "rules": {
+        "quotes": [
+            "error",
+            "single"
+        ],
+        "semi": [
+            "error",
+            "always"
+        ],
+        "no-unused-vars": 0,
+        "no-console": 0,
+        "no-undef":0
+    }
+}

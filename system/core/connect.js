@@ -7,9 +7,9 @@ const GlobalFn = require('../globals');
 const DEBUG = 0;
 
 process.on('uncaughtException', function(err) {
-    console.log("uncaughtException %s", err);
+    console.log('uncaughtException %s', err);
     console.log(err.stack);
-    GlobalFn.die();
+    //GlobalFn.die();
 });
 
 //Connect to server & auth
@@ -52,12 +52,12 @@ function parseChunk(buf) {
         winston.debug('Partial packet');
         return false;
     }
-    winston.debug("Packet type %d", p.type);
+    winston.debug('Packet type %d', p.type);
     winston.debug(p.data.toString('hex'));
     if (p.type in exports.handle) {
         exports.handle[p.type](p.data, new pack.Unpacker(p.data));
     } else {
-        winston.debug("Unknown packet type %d", p.type);
+        winston.debug('Unknown packet type %d', p.type);
         winston.debug(p.data.toString('hex'));
     }
     return true;

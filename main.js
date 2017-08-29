@@ -435,7 +435,7 @@ incMessage.on('pm', function(userId, message) {
                         } else {
                           if (cmd === null || cmd.length === 0) {
                              GlobalFn.PMUser(userId, 'Command not found!', 'warning');
-                         } else if (cmd.disabled) {
+                         } else if (cmd.enabled === false) {
                              GlobalFn.PMUser(userId, 'This command has been disabled.', 'warning');
                          } else if (user === null || user.length === 0) {
                              // If user is not found an async lookup is happening
@@ -460,7 +460,7 @@ incMessage.on('pm', function(userId, message) {
                              Cmd[cmdName](userId, args);
                          }
                         }
-                      })
+                      });
                     }
                 }).catch(function(err) {
                 winston.error('Private Message: ' + err);

@@ -20,1120 +20,1126 @@ const Report = rfr('config/models/report.js');
 const OrgBanList = rfr('config/models/orgbanlist.js');
 
 const ValidChannels = {
-    general: 'generalChannel',
-    gen: 'generalChannel',
-    lr: 'lrChannel',
-    lootrights: 'lrChannel',
-    wts: 'wtsChannel',
-    wtb: 'wtbChannel',
-    all: 'all',
-    pvm: 'pvmChannel'
+  general: 'generalChannel',
+  gen: 'generalChannel',
+  lr: 'lrChannel',
+  lootrights: 'lrChannel',
+  wts: 'wtsChannel',
+  wtb: 'wtbChannel',
+  all: 'all',
+  pvm: 'pvmChannel'
 };
 
 const coreCmd = {
-    lookupUserName: function(userName) {
-        return new Promise(function(resolve, reject) {
-            send_CLIENT_LOOKUP(userName);
-            outstandingLookups.once(userName, function(idResult) {
-                winston.debug('CLIENT_LOOKUP Event Result: ' + idResult);
-                resolve(idResult);
-            });
-        });
-    },
-    getClientName: function(userId) {
-        return new Promise(function(resolve, reject) {
-            onClientName.once(userId, function(userName) {
-                winston.debug('Client Name ' + userName);
-                setTimeout(function() {
-                    resolve(userName);
-                }, 1000);
-            });
-        });
-    },
-    help: function(userId, args) {
-        if (!args[0]) {
-            GlobalFn.PMUser(userId, GlobalFn.blob('Help', helpMsg));
+  lookupUserName: function(userName) {
+    return new Promise(function(resolve, reject) {
+      send_CLIENT_LOOKUP(userName);
+      outstandingLookups.once(userName, function(idResult) {
+        winston.debug('CLIENT_LOOKUP Event Result: ' + idResult);
+        resolve(idResult);
+      });
+    });
+  },
+  getClientName: function(userId) {
+    return new Promise(function(resolve, reject) {
+      onClientName.once(userId, function(userName) {
+        winston.debug('Client Name ' + userName);
+        setTimeout(function() {
+          resolve(userName);
+        }, 1000);
+      });
+    });
+  },
+  help: function(userId, args) {
+    if (!args[0]) {
+      GlobalFn.PMUser(userId, GlobalFn.blob('Help', helpMsg));
+    } else {
+      Command.findOne({
+        'cmdName': args[0].toLowerCase()
+      }, function(err, result) {
+        if (result === null) {
+          GlobalFn.PMUser(userId, 'No help found on this topic.', 'warning');
         } else {
-            Command.findOne({
-                'cmdName': args[0].toLowerCase()
-            }, function(err, result) {
-                if (result === null) {
-                    GlobalFn.PMUser(userId, 'No help found on this topic.', 'warning');
-                } else {
-                    GlobalFn.PMUser(userId, result.help);
-                }
-            });
+          GlobalFn.PMUser(userId, result.help);
         }
-    },
-    cmdlist: function(userId) {
-        Command.find({}, function(err, result) {
+      });
+    }
+  },
+  cmdlist: function(userId) {
+    Command.find({}, function(err, result) {
+      if (err) {
+        winston.error(err);
+        GlobalFn.PMUser(userId, 'Something went wrong, try again.', 'error');
+      } else {
+        let cmdReply = '<center> <font color=#FFFF00> :::Darknet Command List::: </font> </center> \n\n';
+        for (let i = 0, len = result.length; i < len; i++) {
+          cmdReply += '<font color=#00FFFF>Cmd name:</font> ' + _.capitalize(result[i].cmdName) + ' \n';
+          cmdReply += '<font color=#00FFFF>Description:</font> ' + result[i].description + ' \n';
+          cmdReply += '<font color=#00FFFF>Usage:</font> ' + result[i].help + ' \n';
+          cmdReply += '<font color=#00FFFF>Access Required:</font> ' + result[i].accessRequired + ' \n';
+          cmdReply += '<font color=#00FFFF>Status:</font>' + (result[i].enabled === false
+            ? '<font color=#FF0000>Disabled'
+            : '<font color=#00FF00>Enabled') + '</font>\n\n';
+        }
+        GlobalFn.PMUser(userId, GlobalFn.blob('Command List', cmdReply));
+      }
+    });
+  },
+  stats: function(userId) {
+    Promise.join(Player.count({
+      'accessLevel': {
+        $gte: 1
+      }
+    }), Online.count(), Chat.count(),
+    //$lte: moment().subtract(30, 'days')
+    History.count({
+      createdAt: {
+        $gte: moment().subtract(30, 'days')
+      }
+    }), History.count({
+      'channel': 'general',
+      createdAt: {
+        $gte: moment().subtract(30, 'days')
+      }
+    }), History.count({
+      'channel': 'wtb',
+      createdAt: {
+        $gte: moment().subtract(30, 'days')
+      }
+    }), History.count({
+      'channel': 'wts',
+      createdAt: {
+        $gte: moment().subtract(30, 'days')
+      }
+    }), History.count({
+      'channel': 'lr',
+      createdAt: {
+        $gte: moment().subtract(30, 'days')
+      }
+    }), History.count({
+      'channel': 'pvm',
+      createdAt: {
+        $gte: moment().subtract(30, 'days')
+      }
+    }), History.count(), History.count({'channel': 'general'}), History.count({'channel': 'wtb'}), History.count({'channel': 'wts'}), History.count({'channel': 'lr'}), History.count({'channel': 'pvm'}), Player.count({'banned': true}), function(members, online, chat, totalBroadcasts, general, wtb, wts, lr, pvm, totalBroadcastsAT, generalAT, wtbAT, wtsAT, lrAT, pvmAT, banned) {
+      let statsReply = '<center> <font color=#FFFF00> :::Darknet Statistics::: </font> </center> \n\n';
+      statsReply += '<img src=tdb://id:GFX_GUI_FRIENDLIST_SPLITTER>\n';
+      statsReply += '<font color=#00FFFF>Total Members:</font>' + members + '\n';
+      statsReply += '<font color=#00FFFF>Online Members:</font>' + online + '\n';
+      statsReply += '<font color=#00FFFF>Members in Private Chat:</font>' + chat + '\n';
+      statsReply += '<font color=#00FFFF>Banned:</font>' + banned + '\n';
+      statsReply += '<img src=tdb://id:GFX_GUI_FRIENDLIST_SPLITTER>\n\n';
+      statsReply += '<img src=tdb://id:GFX_GUI_FRIENDLIST_SPLITTER>\n';
+      statsReply += '<font color=#00FFFF>Total Broadcasts Last 30 days:</font>' + totalBroadcasts + '\n';
+      statsReply += '<font color=#00FFFF>General:</font>' + general + '\n';
+      statsReply += '<font color=#00FFFF>WTB:</font>' + wtb + '\n';
+      statsReply += '<font color=#00FFFF>WTS:</font>' + wts + '\n';
+      statsReply += '<font color=#00FFFF>Lootrights:</font>' + lr + '\n';
+      statsReply += '<font color=#00FFFF>Pvm:</font>' + pvm + '\n';
+      statsReply += '<img src=tdb://id:GFX_GUI_FRIENDLIST_SPLITTER>\n\n';
+      statsReply += '<img src=tdb://id:GFX_GUI_FRIENDLIST_SPLITTER>\n';
+      statsReply += '<font color=#00FFFF>Total Broadcasts All Time:</font>' + totalBroadcastsAT + '\n';
+      statsReply += '<font color=#00FFFF>General:</font>' + generalAT + '\n';
+      statsReply += '<font color=#00FFFF>WTB:</font>' + wtbAT + '\n';
+      statsReply += '<font color=#00FFFF>WTS:</font>' + wtsAT + '\n';
+      statsReply += '<font color=#00FFFF>Lootrights:</font>' + lr + '\n';
+      statsReply += '<font color=#00FFFF>Pvm:</font>' + pvmAT + '\n';
+      statsReply += '<img src=tdb://id:GFX_GUI_FRIENDLIST_SPLITTER>\n\n';
+      statsReply += '<img src=tdb://id:GFX_GUI_FRIENDLIST_SPLITTER>\n';
+      statsReply += '<font color=#00FFFF>Uptime:</font> ' + moment.duration(process.uptime(), 'seconds').humanize() + ' \n';
+      statsReply += '<img src=tdb://id:GFX_GUI_FRIENDLIST_SPLITTER>';
+      GlobalFn.PMUser(userId, GlobalFn.blob('Darknet Stats', statsReply));
+    }).catch(function(err) {
+      winston.error('Statistics retrieval error: ' + err);
+    });
+  },
+  ban: function(userId, args) {
+    if (!args[0]) {
+      GlobalFn.PMUser(userId, 'Invalid request, check !help ban', 'warning');
+    } else {
+      let userName = _.capitalize(args[0]);
+      Player.findOneAndUpdate({
+        'name': userName
+      }, {
+        'banned': true,
+        'generalChannel': false,
+        'lrChannel': false,
+        'wtbChannel': false,
+        'wtsChannel': false,
+        'pvmChannel': false
+      }, function(err, result) {
+        if (err) {
+          winston.error(err);
+        } else if (!result) {
+          GlobalFn.PMUser(userId, 'Player is not a member.', 'warning');
+        } else {
+          GlobalFn.PMUser(userId, 'Player successfully banned!', 'success');
+        }
+      });
+    }
+  },
+  unban: function(userId, args) {
+    if (!args[0]) {
+      GlobalFn.PMUser(userId, 'Invalid request, check !help unban', 'warning');
+    } else {
+      let userName = _.capitalize(args[0]);
+      Player.findOneAndUpdate({
+        'name': userName
+      }, {
+        'banned': false
+      }, function(err, result) {
+        if (err) {
+          winston.error(err);
+        } else if (!result) {
+          GlobalFn.PMUser(userId, 'Player is not a member.', 'warning');
+        } else {
+          GlobalFn.PMUser(userId, 'Player successfully unbanned!', 'success');
+        }
+      });
+    }
+  },
+  about: function(userId) {
+    GlobalFn.PMUser(userId, GlobalFn.blob('About', about));
+  },
+  rules: function(userId) {
+    GlobalFn.PMUser(userId, GlobalFn.blob('Rules', rules));
+  },
+  addadmin: function(userId, args) {
+    let userName = _.capitalize(args[0]);
+    if (userName !== undefined) {
+      this.lookupUserName(userName).then(function(idResult) {
+        if (idResult !== -1) {
+          Player.findOne({
+            'name': userName
+          }, function(err, result) {
             if (err) {
-                winston.error(err);
-                GlobalFn.PMUser(userId, 'Something went wrong, try again.', 'error');
-            } else {
-                let cmdReply = '<center> <font color=#FFFF00> :::Darknet Command List::: </font> </center> \n\n';
-                for (let i = 0, len = result.length; i < len; i++) {
-                    cmdReply += '<font color=#00FFFF>Cmd name:</font> ' + _.capitalize(result[i].cmdName) + ' \n';
-                    cmdReply += '<font color=#00FFFF>Description:</font> ' + result[i].description + ' \n';
-                    cmdReply += '<font color=#00FFFF>Usage:</font> ' + result[i].help + ' \n';
-                    cmdReply += '<font color=#00FFFF>Access Required:</font> ' + result[i].accessRequired + ' \n';
-                    cmdReply += '<font color=#00FFFF>Status:</font>' + (result[i].enabled === false
-                        ? '<font color=#FF0000>Disabled'
-                        : '<font color=#00FF00>Enabled') + '</font>\n\n';
+              winston.error(err);
+            } else if (result === null) {
+              // If user is not found in the database, insert it with minimal info,
+              // BUDDY_ADD Event will fill the rest
+              const addPlayer = new Player();
+              addPlayer._id = idResult;
+              addPlayer.name = _.capitalize(userName);
+              addPlayer.accessLevel = 2;
+              addPlayer.save(function(err) {
+                if (err) {
+                  winston.error('Failed to add new admin: ' + err);
+                  GlobalFn.PMUser(userId, 'Database operation failed, try again.', 'error');
+                  // As a failsafe try to get data from AO server manually
+                  GlobalFn.getPlayerData(idResult, userName);
+                } else {
+                  send_BUDDY_ADD(idResult);
+                  GlobalFn.PMUser(userId, userName + ' is now an admin.', 'success');
                 }
-                GlobalFn.PMUser(userId, GlobalFn.blob('Command List', cmdReply));
+              });
+            } else if (result.accessLevel === 2) {
+              GlobalFn.PMUser(userId, userName + ' is already an admin.', 'warning');
+            } else {
+              Player.updateOne({
+                'name': userName
+              }, {
+                'accessLevel': 2
+              }, function(err) {
+                if (err) {
+                  winston.error(err);
+                  GlobalFn.PMUser(userId, 'Database error, unable complete operation.', 'error');
+                } else {
+                  GlobalFn.PMUser(userId, userName + ' is now an admin.', 'success');
+                }
+              });
             }
+          });
+        } else {
+          GlobalFn.PMUser(userId, 'Character ' + userName + ' does not exist.', 'warning');
+        }
+      });
+    } else {
+      GlobalFn.PMUser(userId, 'Invalid request, use !addadmin <player name>.', 'warning');
+    }
+
+  },
+  addmember: function(userId, args) {
+    let userName = _.capitalize(args[0]);
+    if (userName !== undefined) {
+      this.lookupUserName(userName).then(function(idResult) {
+        if (idResult !== -1) {
+          Player.findOne({
+            'name': userName
+          }, function(err, result) {
+            if (err) {
+              winston.error(err);
+            } else if (result === null) {
+              // If user is not found in the database, insert it with minimal info,
+              // BUDDY_ADD Event will fill the rest
+              const addPlayer = new Player();
+              addPlayer._id = idResult;
+              addPlayer.name = userName;
+              addPlayer.accessLevel = 1;
+              addPlayer.generalChannel = true;
+              addPlayer.lrChannel = true;
+              addPlayer.wtbChannel = true;
+              addPlayer.wtsChannel = true;
+              addPlayer.pvmChannel = true;
+              addPlayer.save(function(err) {
+                if (err) {
+                  winston.error('Failed to add new member: ' + err);
+                  GlobalFn.PMUser(userId, 'Database operation failed, try again.', 'error');
+                  // As a failsafe try to get data from AO server manually
+                  GlobalFn.getPlayerData(idResult, userName);
+                } else {
+                  Player.count({
+                    'accessLevel': {
+                      $gte: 1
+                    },
+                    'buddyList': 'main'
+                  }, function(err, result) {
+                    if (result >= 900) {
+                      GlobalFn.replicaBuddyList({buddyAction: 'add', buddyId: idResult, count: result});
+                    } else {
+                      send_BUDDY_ADD(idResult);
+                    }
+                  });
+                  GlobalFn.PMUser(userId, userName + ' is now a member.', 'success');
+                }
+              });
+            } else if (result.accessLevel === 1) {
+              GlobalFn.PMUser(userId, userName + ' is already a member.', 'warning');
+            } else {
+              Player.updateOne({
+                'name': userName
+              }, {
+                'accessLevel': 1,
+                'generalChannel': true,
+                'lrChannel': true,
+                'wtbChannel': true,
+                'wtsChannel': true
+              }, function(err) {
+                if (err) {
+                  winston.error(err);
+                  GlobalFn.PMUser(userId, 'Database operation failed, try again.', 'error');
+                } else {
+                  Player.count({
+                    'accessLevel': {
+                      $gte: 1
+                    },
+                    'buddyList': 'main'
+                  }, function(err, result) {
+                    if (result >= 900) {
+                      GlobalFn.replicaBuddyList({buddyAction: 'add', buddyId: idResult, count: result});
+                    } else {
+                      send_BUDDY_ADD(idResult);
+                    }
+                  });
+                  GlobalFn.PMUser(userId, userName + ' is now a member and has been subscribed to all channels!', 'success');
+                }
+              });
+            }
+          });
+        } else {
+          GlobalFn.PMUser(userId, 'Character ' + userName + ' does not exist.', 'warning');
+        }
+      });
+    } else {
+      GlobalFn.PMUser(userId, 'Invalid request, use !addmember <player name>.', 'warning');
+    }
+  },
+  register: function(userId) {
+    Player.findOne({
+      '_id': userId
+    }, function(err, result) {
+      if (err) {
+        winston.error(err);
+      } else if (!result) {
+        coreCmd.getClientName(userId).then(function() {
+          Player.findOneAndUpdate({
+            '_id': userId,
+            'level': {
+              $gte: GlobalFn.minLevel
+            }
+          }, {
+            'accessLevel': 1,
+            'generalChannel': true,
+            'lrChannel': true,
+            'wtbChannel': true,
+            'wtsChannel': true,
+            'pvmChannel': true
+          }, function(err, result) {
+            if (err) {
+              winston.error(err);
+              GlobalFn.PMUser(userId, 'Database operation failed, try again.', 'error');
+            } else if (result === null) {
+              GlobalFn.PMUser(userId, 'Database operation failed, try again.', 'error');
+            } else {
+              Player.count({
+                'accessLevel': {
+                  $gte: 1
+                },
+                'buddyList': 'main'
+              }, function(err, result) {
+                if (result >= 900) {
+                  GlobalFn.replicaBuddyList({buddyAction: 'add', buddyId: userId, count: result});
+                } else {
+                  send_BUDDY_ADD(userId);
+                }
+              });
+              GlobalFn.PMUser(userId, 'Welcome to Darknet, you have been subscribed to all channels, please take a look at our ' + GlobalFn.blob('Rules', rules) + ' and ' + GlobalFn.blob('Help.', helpMsg));
+            }
+          });
         });
-    },
-    stats: function(userId) {
-        Promise.join(Player.count({
-            'accessLevel': {
+      } else if (result.level < GlobalFn.minLevel) {
+        GlobalFn.PMUser(userId, 'You need at least level ' + GlobalFn.minLevel + ' to register', 'warning');
+      } else if (result.accessLevel >= 1) {
+        GlobalFn.PMUser(userId, 'You are already a member.', 'warning');
+      } else {
+        Player.findOneAndUpdate({
+          '_id': userId
+        }, {
+          'accessLevel': 1,
+          'generalChannel': true,
+          'lrChannel': true,
+          'wtbChannel': true,
+          'wtsChannel': true,
+          'pvmChannel': true
+        }, function(err) {
+          if (err) {
+            winston.error(err);
+            GlobalFn.PMUser(userId, 'Database operation failed, try again.', 'error');
+          } else {
+            Player.count({
+              'accessLevel': {
                 $gte: 1
-            }
-        }), Online.count(), Chat.count(),
-        //$lte: moment().subtract(30, 'days')
-        History.count({
-            createdAt: {
-                $gte: moment().subtract(30, 'days')
-            }
-        }), History.count({
-            'channel': 'general',
-            createdAt: {
-                $gte: moment().subtract(30, 'days')
-            }
-        }), History.count({
-            'channel': 'wtb',
-            createdAt: {
-                $gte: moment().subtract(30, 'days')
-            }
-        }), History.count({
-            'channel': 'wts',
-            createdAt: {
-                $gte: moment().subtract(30, 'days')
-            }
-        }), History.count({
-            'channel': 'lr',
-            createdAt: {
-                $gte: moment().subtract(30, 'days')
-            }
-        }), History.count({
-            'channel': 'pvm',
-            createdAt: {
-                $gte: moment().subtract(30, 'days')
-            }
-        }), History.count(), History.count({'channel': 'general'}), History.count({'channel': 'wtb'}), History.count({'channel': 'wts'}), History.count({'channel': 'lr'}), History.count({'channel': 'pvm'}), Player.count({'banned': true}), function(members, online, chat, totalBroadcasts, general, wtb, wts, lr, pvm, totalBroadcastsAT, generalAT, wtbAT, wtsAT, lrAT, pvmAT, banned) {
-            let statsReply = '<center> <font color=#FFFF00> :::Darknet Statistics::: </font> </center> \n\n';
-            statsReply += '<img src=tdb://id:GFX_GUI_FRIENDLIST_SPLITTER>\n';
-            statsReply += '<font color=#00FFFF>Total Members:</font>' + members + '\n';
-            statsReply += '<font color=#00FFFF>Online Members:</font>' + online + '\n';
-            statsReply += '<font color=#00FFFF>Members in Private Chat:</font>' + chat + '\n';
-            statsReply += '<font color=#00FFFF>Banned:</font>' + banned + '\n';
-            statsReply += '<img src=tdb://id:GFX_GUI_FRIENDLIST_SPLITTER>\n\n';
-            statsReply += '<img src=tdb://id:GFX_GUI_FRIENDLIST_SPLITTER>\n';
-            statsReply += '<font color=#00FFFF>Total Broadcasts Last 30 days:</font>' + totalBroadcasts + '\n';
-            statsReply += '<font color=#00FFFF>General:</font>' + general + '\n';
-            statsReply += '<font color=#00FFFF>WTB:</font>' + wtb + '\n';
-            statsReply += '<font color=#00FFFF>WTS:</font>' + wts + '\n';
-            statsReply += '<font color=#00FFFF>Lootrights:</font>' + lr + '\n';
-            statsReply += '<font color=#00FFFF>Pvm:</font>' + pvm + '\n';
-            statsReply += '<img src=tdb://id:GFX_GUI_FRIENDLIST_SPLITTER>\n\n';
-            statsReply += '<img src=tdb://id:GFX_GUI_FRIENDLIST_SPLITTER>\n';
-            statsReply += '<font color=#00FFFF>Total Broadcasts All Time:</font>' + totalBroadcastsAT + '\n';
-            statsReply += '<font color=#00FFFF>General:</font>' + generalAT + '\n';
-            statsReply += '<font color=#00FFFF>WTB:</font>' + wtbAT + '\n';
-            statsReply += '<font color=#00FFFF>WTS:</font>' + wtsAT + '\n';
-            statsReply += '<font color=#00FFFF>Lootrights:</font>' + lr + '\n';
-            statsReply += '<font color=#00FFFF>Pvm:</font>' + pvmAT + '\n';
-            statsReply += '<img src=tdb://id:GFX_GUI_FRIENDLIST_SPLITTER>\n\n';
-            statsReply += '<img src=tdb://id:GFX_GUI_FRIENDLIST_SPLITTER>\n';
-            statsReply += '<font color=#00FFFF>Uptime:</font> ' + moment.duration(process.uptime(), 'seconds').humanize() + ' \n';
-            statsReply += '<img src=tdb://id:GFX_GUI_FRIENDLIST_SPLITTER>';
-            GlobalFn.PMUser(userId, GlobalFn.blob('Darknet Stats', statsReply));
-        }).catch(function(err) {
-            winston.error('Statistics retrieval error: ' + err);
-        });
-    },
-    ban: function(userId, args) {
-        if (!args[0]) {
-            GlobalFn.PMUser(userId, 'Invalid request, check !help ban', 'warning');
-        } else {
-            let userName = _.capitalize(args[0]);
-            Player.findOneAndUpdate({
-                'name': userName
-            }, {
-                'banned': true,
-                'generalChannel': false,
-                'lrChannel': false,
-                'wtbChannel': false,
-                'wtsChannel': false,
-                'pvmChannel': false
+              },
+              'buddyList': 'main'
             }, function(err, result) {
-                if (err) {
-                    winston.error(err);
-                } else if (!result) {
-                    GlobalFn.PMUser(userId, 'Player is not a member.', 'warning');
-                } else {
-                    GlobalFn.PMUser(userId, 'Player successfully banned!', 'success');
-                }
+              if (result >= 900) {
+                GlobalFn.replicaBuddyList({buddyAction: 'add', buddyId: userId, count: result});
+              } else {
+                send_BUDDY_ADD(userId);
+              }
             });
-        }
-    },
-    unban: function(userId, args) {
-        if (!args[0]) {
-            GlobalFn.PMUser(userId, 'Invalid request, check !help unban', 'warning');
-        } else {
-            let userName = _.capitalize(args[0]);
-            Player.findOneAndUpdate({
-                'name': userName
-            }, {
-                'banned': false
-            }, function(err, result) {
-                if (err) {
-                    winston.error(err);
-                } else if (!result) {
-                    GlobalFn.PMUser(userId, 'Player is not a member.', 'warning');
-                } else {
-                    GlobalFn.PMUser(userId, 'Player successfully unbanned!', 'success');
-                }
-            });
-        }
-    },
-    about: function(userId) {
-        GlobalFn.PMUser(userId, GlobalFn.blob('About', about));
-    },
-    rules: function(userId) {
-        GlobalFn.PMUser(userId, GlobalFn.blob('Rules', rules));
-    },
-    addadmin: function(userId, args) {
-        let userName = _.capitalize(args[0]);
-        if (userName !== undefined) {
-            this.lookupUserName(userName).then(function(idResult) {
-                if (idResult !== -1) {
-                    Player.findOne({
-                        'name': userName
-                    }, function(err, result) {
-                        if (err) {
-                            winston.error(err);
-                        } else if (result === null) {
-                            // If user is not found in the database, insert it with minimal info,
-                            // BUDDY_ADD Event will fill the rest
-                            const addPlayer = new Player();
-                            addPlayer._id = idResult;
-                            addPlayer.name = _.capitalize(userName);
-                            addPlayer.accessLevel = 2;
-                            addPlayer.save(function(err) {
-                                if (err) {
-                                    winston.error('Failed to add new admin: ' + err);
-                                    GlobalFn.PMUser(userId, 'Database operation failed, try again.', 'error');
-                                    // As a failsafe try to get data from AO server manually
-                                    GlobalFn.getPlayerData(idResult, userName);
-                                } else {
-                                    send_BUDDY_ADD(idResult);
-                                    GlobalFn.PMUser(userId, userName + ' is now an admin.', 'success');
-                                }
-                            });
-                        } else if (result.accessLevel === 2) {
-                            GlobalFn.PMUser(userId, userName + ' is already an admin.', 'warning');
-                        } else {
-                            Player.updateOne({
-                                'name': userName
-                            }, {
-                                'accessLevel': 2
-                            }, function(err) {
-                                if (err) {
-                                    winston.error(err);
-                                    GlobalFn.PMUser(userId, 'Database error, unable complete operation.', 'error');
-                                } else {
-                                    GlobalFn.PMUser(userId, userName + ' is now an admin.', 'success');
-                                }
-                            });
-                        }
-                    });
-                } else {
-                    GlobalFn.PMUser(userId, 'Character ' + userName + ' does not exist.', 'warning');
-                }
-            });
-        } else {
-            GlobalFn.PMUser(userId, 'Invalid request, use !addadmin <player name>.', 'warning');
-        }
-
-    },
-    addmember: function(userId, args) {
-        let userName = _.capitalize(args[0]);
-        if (userName !== undefined) {
-            this.lookupUserName(userName).then(function(idResult) {
-                if (idResult !== -1) {
-                    Player.findOne({
-                        'name': userName
-                    }, function(err, result) {
-                        if (err) {
-                            winston.error(err);
-                        } else if (result === null) {
-                            // If user is not found in the database, insert it with minimal info,
-                            // BUDDY_ADD Event will fill the rest
-                            const addPlayer = new Player();
-                            addPlayer._id = idResult;
-                            addPlayer.name = userName;
-                            addPlayer.accessLevel = 1;
-                            addPlayer.generalChannel = true;
-                            addPlayer.lrChannel = true;
-                            addPlayer.wtbChannel = true;
-                            addPlayer.wtsChannel = true;
-                            addPlayer.pvmChannel = true;
-                            addPlayer.save(function(err) {
-                                if (err) {
-                                    winston.error('Failed to add new member: ' + err);
-                                    GlobalFn.PMUser(userId, 'Database operation failed, try again.', 'error');
-                                    // As a failsafe try to get data from AO server manually
-                                    GlobalFn.getPlayerData(idResult, userName);
-                                } else {
-                                    Player.count({
-                                        'accessLevel': {
-                                            $gte: 1
-                                        },
-                                        'buddyList': 'main'
-                                    }, function(err, result) {
-                                        if (result >= 900) {
-                                            GlobalFn.replicaBuddyList({buddyAction: 'add', buddyId: idResult, count: result});
-                                        } else {
-                                            send_BUDDY_ADD(idResult);
-                                        }
-                                    });
-                                    GlobalFn.PMUser(userId, userName + ' is now a member.', 'success');
-                                }
-                            });
-                        } else if (result.accessLevel === 1) {
-                            GlobalFn.PMUser(userId, userName + ' is already a member.', 'warning');
-                        } else {
-                            Player.updateOne({
-                                'name': userName
-                            }, {
-                                'accessLevel': 1,
-                                'generalChannel': true,
-                                'lrChannel': true,
-                                'wtbChannel': true,
-                                'wtsChannel': true
-                            }, function(err) {
-                                if (err) {
-                                    winston.error(err);
-                                    GlobalFn.PMUser(userId, 'Database operation failed, try again.', 'error');
-                                } else {
-                                    Player.count({
-                                        'accessLevel': {
-                                            $gte: 1
-                                        },
-                                        'buddyList': 'main'
-                                    }, function(err, result) {
-                                        if (result >= 900) {
-                                            GlobalFn.replicaBuddyList({buddyAction: 'add', buddyId: idResult, count: result});
-                                        } else {
-                                            send_BUDDY_ADD(idResult);
-                                        }
-                                    });
-                                    GlobalFn.PMUser(userId, userName + ' is now a member and has been subscribed to all channels!', 'success');
-                                }
-                            });
-                        }
-                    });
-                } else {
-                    GlobalFn.PMUser(userId, 'Character ' + userName + ' does not exist.', 'warning');
-                }
-            });
-        } else {
-            GlobalFn.PMUser(userId, 'Invalid request, use !addmember <player name>.', 'warning');
-        }
-    },
-    register: function(userId) {
-        Player.findOne({
-            '_id': userId
-        }, function(err, result) {
-            if (err) {
-                winston.error(err);
-            } else if (!result) {
-                coreCmd.getClientName(userId).then(function() {
-                    Player.findOneAndUpdate({
-                        '_id': userId,
-                        'level': {
-                            $gte: GlobalFn.minLevel
-                        }
-                    }, {
-                        'accessLevel': 1,
-                        'generalChannel': true,
-                        'lrChannel': true,
-                        'wtbChannel': true,
-                        'wtsChannel': true,
-                        'pvmChannel': true
-                    }, function(err, result) {
-                        if (err) {
-                            winston.error(err);
-                            GlobalFn.PMUser(userId, 'Database operation failed, try again.', 'error');
-                        } else if (result === null) {
-                            GlobalFn.PMUser(userId, 'Database operation failed, try again.', 'error');
-                        } else {
-                            Player.count({
-                                'accessLevel': {
-                                    $gte: 1
-                                },
-                                'buddyList': 'main'
-                            }, function(err, result) {
-                                if (result >= 900) {
-                                    GlobalFn.replicaBuddyList({buddyAction: 'add', buddyId: userId, count: result});
-                                } else {
-                                    send_BUDDY_ADD(userId);
-                                }
-                            });
-                            GlobalFn.PMUser(userId, 'Welcome to Darknet, you have been subscribed to all channels, please take a look at our ' + GlobalFn.blob('Rules', rules) + ' and ' + GlobalFn.blob('Help.', helpMsg));
-                        }
-                    });
-                });
-            } else if (result.level < GlobalFn.minLevel) {
-                GlobalFn.PMUser(userId, 'You need at least level ' + GlobalFn.minLevel + ' to register', 'warning');
-            } else if (result.accessLevel >= 1) {
-                GlobalFn.PMUser(userId, 'You are already a member.', 'warning');
-            } else {
-                Player.findOneAndUpdate({
-                    '_id': userId
-                }, {
-                    'accessLevel': 1,
-                    'generalChannel': true,
-                    'lrChannel': true,
-                    'wtbChannel': true,
-                    'wtsChannel': true,
-                    'pvmChannel': true
-                }, function(err) {
-                    if (err) {
-                        winston.error(err);
-                        GlobalFn.PMUser(userId, 'Database operation failed, try again.', 'error');
-                    } else {
-                        Player.count({
-                            'accessLevel': {
-                                $gte: 1
-                            },
-                            'buddyList': 'main'
-                        }, function(err, result) {
-                            if (result >= 900) {
-                                GlobalFn.replicaBuddyList({buddyAction: 'add', buddyId: userId, count: result});
-                            } else {
-                                send_BUDDY_ADD(userId);
-                            }
-                        });
-                        GlobalFn.PMUser(userId, 'Welcome to Darknet ' + result.name + ', you have been subscribed to all channels, please take a look at our ' + GlobalFn.blob('Rules', rules) + ' and ' + GlobalFn.blob('Help.', helpMsg));
-                    }
-                });
-            }
-        });
-    },
-    remadmin: function(userId, args) {
-        if (!args[0]) {
-            GlobalFn.PMUser(userId, 'Invalid request, use !delmember <player name>.', 'warning');
-        } else {
-            let userName = _.capitalize(args[0]);
-            Player.findOne({
-                'name': userName
-            }, function(err) {
-                if (err) {
-                    winston.error(err);
-                    GlobalFn.PMUser(userId, 'Database operation failed, try again.', 'error');
-                } else if (!result || result.accessLevel !== 2) {
-                    GlobalFn.PMUser(userId, userName + ' is not an admin.', 'warning');
-                } else {
-                    Player.updateOne({
-                        'name': userName
-                    }, {
-                        'accessLevel': 1
-                    }, function(err) {
-                        if (err) {
-                            winston.error(err);
-                            GlobalFn.PMUser(userId, 'Database operation failed, try again.', 'error');
-                        } else {
-                            GlobalFn.PMUser(userId, userName + ' is no longer an admin.', 'success');
-                        }
-                    });
-                }
-            });
-        }
-    },
-    remmember: function(userId, args) {
-        if (!args[0]) {
-            GlobalFn.PMUser(userId, 'Invalid request, use !remmember <player name>.', 'warning');
-        } else {
-            let userName = _.capitalize(args[0]);
-            Player.findOne({
-                'name': userName
-            }, function(err, result) {
-                if (err) {
-                    winston.error(err);
-                    GlobalFn.PMUser(userId, 'Database operation failed, try again.', 'error');
-                } else if (!result || result.accessLevel < 1) {
-                    GlobalFn.PMUser(userId, userName + ' is not member.', 'warning');
-                } else {
-                    Player.updateOne({
-                        'name': userName
-                    }, {
-                        'accessLevel': 0,
-                        'generalChannel': false,
-                        'lrChannel': false,
-                        'wtbChannel': false,
-                        'wtsChannel': false,
-                        'pvmChannel': false
-                    }, function(err) {
-                        if (err) {
-                            winston.error(err);
-                            GlobalFn.PMUser(userId, 'Database operation failed, try again.', 'error');
-                        } else {
-                            if (result.buddyList === 'main') {
-                                send_BUDDY_REMOVE(result._id);
-                            } else {
-                                GlobalFn.replicaBuddyList({buddyAction: 'rem', replica: result.buddyList, buddyId: result._id});
-                            }
-                            send_BUDDY_REMOVE(result._id);
-                            GlobalFn.PMUser(userId, userName + ' is no longer a member.', 'success');
-                        }
-                    });
-                }
-            });
-        }
-    },
-    unregister: function(userId) {
-        Player.findOne({
-            '_id': userId
-        }, function(err, result) {
-            if (err) {
-                winston.error(err);
-            } else if (!result) { // this should not happen
-                winston.debug('Unable to find ' + userId);
-                GlobalFn.PMUser(userId, 'You are not a member!', 'warning');
-            } else if (result.accessLevel === 0) {
-                GlobalFn.PMUser(userId, 'You are not a member!', 'warning');
-            } else {
-                Player.updateOne({
-                    '_id': userId
-                }, {
-                    'accessLevel': 0,
-                    'generalChannel': false,
-                    'lrChannel': false,
-                    'wtbChannel': false,
-                    'wtsChannel': false,
-                    'pvmChannel': false
-                }, function(err) {
-                    if (err) {
-                        winston.error('Failed to unregister player: ' + err);
-                        GlobalFn.PMUser(userId, 'Database operation failed, try again.', 'error');
-                    } else {
-                        if (result.buddyList === 'main') {
-                            send_BUDDY_REMOVE(userId);
-                        } else {
-                            GlobalFn.replicaBuddyList({buddyAction: 'rem', replica: result.buddyList, buddyId: userId});
-                        }
-                        GlobalFn.PMUser(userId, 'You are no longer a member and have been unsubscribed from all channels!', 'success');
-                    }
-                });
-            }
-        });
-    },
-    subscribe: function(userId, args) {
-        if (!args[0]) {
-            GlobalFn.PMUser(userId, 'Invalid request, see help.', 'warning');
-        } else {
-            args[0] = args[0].toLowerCase();
-            if (ValidChannels.hasOwnProperty(args[0])) {
-                let update = {};
-                if (args[0] === 'all') {
-                    update = {
-                        'generalChannel': true,
-                        'lrChannel': true,
-                        'wtbChannel': true,
-                        'wtsChannel': true,
-                        'pvmChannel': true
-                    };
-                } else {
-                    update[ValidChannels[args[0]]] = true;
-                }
-                Player.updateOne({
-                    '_id': userId
-                }, update, function(err) {
-                    if (err) {
-                        winston.error(err);
-                        GlobalFn.PMUser(userId, 'Database operation failed, try again.', 'error');
-                    } else {
-                        GlobalFn.PMUser(userId, 'Successfully subscribed to  ' + args[0] + '.', 'success');
-                    }
-                });
-            } else {
-                GlobalFn.PMUser(userId, 'Invalid channel name.Valid choices are: general,lr,wts,wtb.', 'warning');
-            }
-
-        }
-    },
-    unsubscribe: function(userId, args) {
-        if (!args[0]) {
-            GlobalFn.PMUser(userId, 'Invalid request, see help.', 'warning');
-        } else {
-            args[0] = args[0].toLowerCase();
-            if (ValidChannels.hasOwnProperty(args[0])) {
-                let update = {};
-                if (args[0] === 'all') {
-                    update = {
-                        'generalChannel': false,
-                        'lrChannel': false,
-                        'wtbChannel': false,
-                        'wtsChannel': false,
-                        'pvmChannel': false
-                    };
-                } else {
-                    update[ValidChannels[args[0]]] = false;
-                }
-                Player.updateOne({
-                    '_id': userId
-                }, update, function(err) {
-                    if (err) {
-                        winston.error(err);
-                        GlobalFn.PMUser(userId, 'Database operation failed, try again.', 'error');
-                    } else {
-                        GlobalFn.PMUser(userId, 'Successfully unsubscribed from ' + args[0] + '.', 'success');
-                    }
-                });
-            } else {
-                GlobalFn.PMUser(userId, 'Invalid channel name.Valid choices are: general,lr,wts,wtb.', 'warning');
-            }
-
-        }
-    },
-    test: function(userId) {
-        //For testing purposes only, keep empty
-    },
-    addreplica: function(userId, args) {
-        addReplica = new Replica();
-        addReplica.username = args[0];
-        addReplica.password = args[1];
-        addReplica.replicaname = _.capitalize(args[2]);
-        if (args[3]) {
-            addReplica.dimension = args[3];
-        }
-        addReplica.save(function(err) {
-            if (err) {
-                winston.error(err);
-                GlobalFn.PMUser(userId, 'Unable to add new replica, see Log for details!', 'error');
-            } else {
-                GlobalFn.PMUser(userId, 'Successfully added a new replica!', 'success');
-            }
-        });
-    },
-    shutdown: function(userId) {
-        GlobalFn.die('Shutting down on user request');
-    },
-    invite: function(userId, args) {
-        let userName = args[0];
-        if (userName !== undefined) {
-            this.lookupUserName(userName).then(function(idResult) {
-                if (idResult !== -1) {
-                    send_PRIVGRP_INVITE(idResult);
-                    GlobalFn.PMUser(userId, 'Invited ' + userName + ' to this channel', 'success');
-                } else {
-                    GlobalFn.PMUser(userId, 'Character ' + userName + ' does not exist.', 'warn');
-                }
-            });
-        } else {
-            send_PRIVGRP_INVITE(userId);
-        }
-    },
-    join: function(userId) {
-        send_PRIVGRP_INVITE(userId);
-    },
-    kick: function(userId, args) {
-        let userName = args[0];
-        if (userName !== undefined) {
-            this.lookupUserName(userName).then(function(idResult) {
-                if (idResult !== -1) {
-                    Chat.findById(idResult).populate('_id').exec(function(err, result) {
-                        if (err) {
-                            winston.error(err);
-                        } else if (result === null) {
-                            GlobalFn.PMUser(userId, userName + ' is not on the channel.', 'warning');
-                        } else {
-                            send_PRIVGRP_KICK(idResult);
-                            GlobalFn.PMUser(userId, 'Kicked ' + userName + ' from this channel.', 'success');
-                        }
-                    });
-                } else {
-                    GlobalFn.PMUser(userId, 'Character ' + userName + ' does not exist.', 'warn');
-                }
-            });
-        } else {
-            send_PRIVGRP_KICK(userId);
-            GlobalFn.PMUser(userId, 'You\'ve left the channel.', 'success');
-        }
-    },
-    leave: function(userId) {
-        send_PRIVGRP_KICK(userId);
-        GlobalFn.PMUser(userId, 'You\'ve left the channel.', 'success');
-    },
-    set: function(userId, args) {
-        if (ValidSettings.hasOwnProperty(args[0]) || !args[1]) {
-            Settings.updateOne({}, {
-                [ValidSettings[args[0]]]: args[1]
-            }, function(err) {
-                if (err) {
-                    winston.error(err);
-                } else {
-                    GlobalFn.loadSettings();
-                    GlobalFn.PMUser(userId, 'Settings successfully updated', 'success');
-                }
-            });
-        } else {
-            GlobalFn.PMUser(userId, 'Invalid setting!', 'error');
-        }
-    },
-    autoinvite: function(userId, args) {
-        if (!args[0]) {
-            Player.findOne({
-                '_id': userId
-            }, function(err, result) {
-                if (err) {
-                    winston.error(err);
-                } else {
-                    GlobalFn.PMUser(userId, 'Autoinvite is set to: ' + result.autoinvite, 'success');
-                }
-            });
-        } else if (args[0].toLowerCase() === 'on' || args[0].toLowerCase() === 'off') {
-            if (args[0].toLowerCase() === 'on') {
-                Player.updateOne({
-                    '_id': userId
-                }, {
-                    autoinvite: true
-                }, function(err) {
-                    if (err) {
-                        winston.error(err);
-                    } else {
-                        GlobalFn.PMUser(userId, 'Autoinvite successfully updated!');
-                    }
-                });
-            } else {
-                Player.updateOne({
-                    '_id': userId
-                }, {
-                    autoinvite: false
-                }, function(err) {
-                    if (err) {
-                        winston.error(err);
-                    } else {
-                        GlobalFn.PMUser(userId, 'Autoinvite successfully updated!');
-                    }
-                });
-            }
-        } else {
-            GlobalFn.PMUser(userId, 'Invalid setting!', 'error');
-        }
-    },
-    history: function(userId, args) {
-        if (!args[0]) {
-            History.find().sort({createdAt: 'descending'}).limit(20).exec(function(err, result) {
-                if (err) {
-                    winston.error(err);
-                } else {
-                    let historyMsg = '<center> <font color=#FFFF00> :::Darknet History::: </font> </center> \n\n';
-                    for (let i = 0, len = result.length; i < len; i++) {
-                        historyMsg += '<font color=#00FFFF>' + _.capitalize(result[i].channel) + ': </font>';
-                        historyMsg += result[i].message + '<font color=#00FFFF> [' + result[i].name + ']</font> - ' + moment(result[i].createdAt).fromNow() + '\n';
-                        historyMsg += '<img src=tdb://id:GFX_GUI_FRIENDLIST_SPLITTER>\n\n';
-                    }
-                    GlobalFn.PMUser(userId, GlobalFn.blob('History', historyMsg));
-                }
-            });
-        } else if (args[0].toLowerCase() === 'wts' || args[0].toLowerCase() === 'wtb' || args[0].toLowerCase() === 'general' || args[0].toLowerCase() === 'pvm' || args[0].toLowerCase() === 'lr') {
-            History.find({channel: args[0].toLowerCase()}).sort({createdAt: 'descending'}).limit(20).exec(function(err, result) {
-                if (err) {
-                    winston.error(err);
-                } else {
-                    let historyMsg = '<center> <font color=#FFFF00> :::Darknet History::: </font> </center> \n\n';
-                    for (let i = 0, len = result.length; i < len; i++) {
-                        historyMsg += '<font color=#00FFFF>' + _.capitalize(result[i].channel) + ': </font>';
-                        historyMsg += result[i].message.replace(/[^\x00-\x7F]/gmi, "") + '<font color=#00FFFF> [' + result[i].name + ']</font> - ' + moment(result[i].createdAt).fromNow() + '\n\n';
-                        historyMsg += '<img src=tdb://id:GFX_GUI_FRIENDLIST_SPLITTER>\n\n';
-                    }
-                    GlobalFn.PMUser(userId, GlobalFn.blob('History', historyMsg));
-                }
-            });
-        } else {
-            GlobalFn.PMUser(userId, 'Invalid channel selected.', 'warning');
-        }
-    },
-    replicastatus: function(userId) {
-        Replica.find({}, function(err, result) {
-            let repStatus = '<center> <font color=#FFFF00> :::Darknet Replicas Status::: </font> </center> \n\n';
-            for (let i = 0, len = result.length; i < len; i++) {
-                repStatus += '<img src=tdb://id:GFX_GUI_FRIENDLIST_SPLITTER>\n';
-                repStatus += '<font color=#00FFFF>Name: </font>' + result[i].replicaname + '\n';
-                if (result[i].ready) {
-                    repStatus += '<font color=#00FFFF>Busy: </font> <font color=#00FF00>No </font>\n';
-                } else {
-                    repStatus += '<font color=#00FFFF>Busy: </font> <font color=#FF0000>Yes </font>\n';
-                }
-                repStatus += '<img src=tdb://id:GFX_GUI_FRIENDLIST_SPLITTER>\n\n';
-            }
-            GlobalFn.PMUser(userId, GlobalFn.blob('Replicas Status', repStatus));
-        });
-    },
-    ignore: function(userId, args) {
-        if (!args[0]) {
-            GlobalFn.PMUser(userId, 'Invalid request, see !help ignore.', 'warning');
-        } else {
-            let userName = _.capitalize(args[0]);
-            Player.findOne({
-                'name': userName
-            }, function(err, result) {
-                if (err) {
-                    winston.error(err);
-                    GlobalFn.PMUser(userId, 'Database operation failed.', 'error');
-                } else if (result === null) {
-                    GlobalFn.PMUser(userId, 'Specified player is not a member.', 'warning');
-                } else {
-                    Player.findOneAndUpdate({
-                        '_id': userId
-                    }, {
-                        $addToSet: {
-                            'ignorelist': result._id
-                        }
-                    }, function(err) {
-                        if (err) {
-                            winston.error(err);
-                            GlobalFn.PMUser(userId, 'Database operation failed.', 'error');
-                        } else {
-                            GlobalFn.PMUser(userId, 'Added ' + userName + ' to ignore list.', 'success');
-                        }
-                    });
-                }
-            });
-        }
-    },
-    unignore: function(userId, args) {
-        if (!args[0]) {
-            GlobalFn.PMUser(userId, 'Invalid request, see !help unignore.', 'warning');
-        } else {
-            let userName = _.capitalize(args[0]);
-            Player.findOne({
-                'name': userName
-            }, function(err, result) {
-                if (err) {
-                    winston.error(err);
-                    GlobalFn.PMUser(userId, 'Database operation failed.', 'error');
-                } else if (result === null) {
-                    GlobalFn.PMUser(userId, 'Specified player is not a member.', 'warning');
-                } else {
-                    Player.findOneAndUpdate({
-                        '_id': userId
-                    }, {
-                        $pull: {
-                            'ignorelist': result._id
-                        }
-                    }, function(err) {
-                        if (err) {
-                            winston.error(err);
-                            GlobalFn.PMUser(userId, 'Database operation failed.', 'error');
-                        } else {
-                            GlobalFn.PMUser(userId, 'Removed ' + userName + ' from ignore list.', 'success');
-                        }
-                    });
-                }
-            });
-        }
-    },
-    playerhistory: function(userId, args) {
-        if (!args[0]) {
-            //If no arguments provided display braodcast history of sender.
-            Player.findOne({
-                '_id': userId
-            }, function(err, playerInfo) {
-                if (err) {
-                    winston.error(err);
-                } else {
-                    History.find({'name': playerInfo.name}).sort({createdAt: 'descending'}).limit(20).exec(function(err, result) {
-                        if (err) {
-                            winston.error(err);
-                            GlobalFn.PMUser(userId, 'Database operation failed.', 'error');
-                        } else {
-                            let historyMsg = '<center> <font color=#FFFF00> :::' + playerInfo.name + '\'s Broadcast History::: </font> </center> \n\n';
-                            for (let i = 0, len = result.length; i < len; i++) {
-                                historyMsg += '<font color=#00FFFF>' + _.capitalize(result[i].channel) + ': </font>';
-                                historyMsg += result[i].message.replace(/[^\x00-\x7F]/gmi, "") + '<font color=#00FFFF> [' + result[i].name + ']</font> - ' + moment(result[i].createdAt).fromNow() + '\n\n';
-                                historyMsg += '<img src=tdb://id:GFX_GUI_FRIENDLIST_SPLITTER>\n\n';
-                            }
-                            GlobalFn.PMUser(userId, GlobalFn.blob(playerInfo.name + '\'s History', historyMsg));
-                        }
-                    });
-                }
-
-            });
-        } else {
-            let userName = _.capitalize(args[0]);
-            History.find({'name': userName}).sort({createdAt: 'descending'}).limit(30).exec(function(err, result) {
-                if (err) {
-                    winston.error(err);
-                    GlobalFn.PMUser(userId, 'Database operation failed.', 'error');
-                } else {
-                    let historyMsg = '<center> <font color=#FFFF00> :::' + userName + '\'s Broadcast History::: </font> </center> \n\n';
-                    for (let i = 0, len = result.length; i < len; i++) {
-                        historyMsg += '<font color=#00FFFF>' + _.capitalize(result[i].channel) + ': </font>';
-                        historyMsg += result[i].message.replace(/[^\x00-\x7F]/gmi, "") + '<font color=#00FFFF> [' + result[i].name + ']</font> - ' + moment(result[i].createdAt).fromNow() + '\n\n';
-                        historyMsg += '<img src=tdb://id:GFX_GUI_FRIENDLIST_SPLITTER>\n\n';
-                    }
-                    GlobalFn.PMUser(userId, GlobalFn.blob(userName + '\'s History', historyMsg));
-                }
-            });
-        }
-    },
-    admins: function(userId) {
-        GlobalFn.PMUser(userId, 'My master is [<a href="user://Wafflespower">Wafflespower</a>], feel free to contact him for any Darknet issues, suggestions or just general feedback.');
-    },
-    lastseen: function(userId, args) {
-        if (!args[0]) {
-            GlobalFn.PMUser(userId, 'Invalid request.', 'warning');
-        } else {
-            let userName = _.capitalize(args[0]);
-            // Check if player is in database.
-            Player.findOne({
-                'name': userName
-            }, function(err, player) {
-                if (err) {
-                    winston.error(err);
-                    GlobalFn.PMUser(userId, 'Database operation failed.', 'error');
-                } else {
-                    if (!player) {
-                        GlobalFn.PMUser(userId, 'I have never seen <font color=#FF0000>' + userName + '</font>!', 'warning');
-                    } else {
-                        // Check if player is online.
-                        Online.findOne({
-                            '_id': player._id
-                        }, function(err, result) {
-                            if (err) {
-                                winston.error(err);
-                                GlobalFn.PMUser(userId, 'Database operation failed.', 'error');
-                            } else {
-                                // If player is NOT online.
-                                if (result === null) {
-                                    GlobalFn.PMUser(userId, 'Player <font color=#FF0000>' + userName + '</font> Was last seen on ' + player.lastseen + ' about  <font color=#FF0000>' + moment(player.lastseen).fromNow() + '</font>!');
-                                } else {
-                                    // If PLayer is online.
-                                    GlobalFn.PMUser(userId, 'Player <font color=#FF0000>' + userName + '</font> is <font color=#00FF00>Online</font> now!' + ' Logged on at ' + result.createdAt + ' about <font color=#FF0000>' + moment(result.createdAt).fromNow() + '</font>!');
-                                }
-                            }
-                        });
-                    }
-                }
-            });
-        }
-    },
-    addwarning: function(userId, args) {
-        if (!args[0]) {
-            return GlobalFn.PMUser(userId, 'Invalid request!', 'warning');
-        }
-        let userName = _.capitalize(args[0]);
-        Player.findOne({
-            'name': userName
-        }, function(err, result) {
-            if (err) {
-                winston.error(err);
-            } else {
-                if (result === null) {
-                    GlobalFn.PMUser(userId, userName + ' is not a member.', 'warning');
-                } else if (result.warnings + 1 >= GlobalFn.maxWarnings) {
-                    Player.updateOne({
-                        'name': userName
-                    }, {
-                        'banned': true,
-                        'generalChannel': false,
-                        'lrChannel': false,
-                        'wtbChannel': false,
-                        'wtsChannel': false,
-                        'pvmChannel': false
-                    }, function(err) {
-                        if (err) {
-                            winston.error(err);
-                        } else {
-                            GlobalFn.PMUser(userId, userName + ' has reached the maximum amount of warnings and has been banned!', 'success');
-                        }
-                    });
-                } else {
-                    Player.findOneAndUpdate({
-                        'name': userName
-                    }, {
-                        $inc: {
-                            'warnings': 1
-                        }
-                    }, function(err) {
-                        if (err) {
-                            winston.error(err);
-                        } else {
-                            GlobalFn.PMUser(result._id, 'A warning has been added to your account, you now have ' + (result.warnings + 1) + ' warning(s)!', 'warning');
-                            GlobalFn.PMUser(userId, 'A warning has been added to ' + userName + ' \'s account. ', 'success');
-                        }
-                    });
-                }
-            }
-        });
-    },
-    remwarning: function(userId, args) {
-        if (!args[0]) {
-            return GlobalFn.PMUser(userId, 'Invalid request!', 'warning');
-        }
-        let userName = _.capitalize(args[0]);
-        Player.findOne({
-            'name': userName
-        }, function(err, result) {
-            if (result === null) {
-                GlobalFn.PMUser(userId, 'Player not found!', 'warning');
-            } else if (result.warnings <= 0) {
-                GlobalFn.PMUser(userId, 'Player has no warnings!', 'warning');
-            } else {
-                Player.updateOne({
-                    'name': userName
-                }, {
-                    $inc: {
-                        'warnings': -1
-                    }
-                }, function(err) {
-                    if (err) {
-                        winston.error(err);
-                    } else {
-                        GlobalFn.PMUser(userId, 'One warning was removed from ' + userName + '\'s account.', 'success');
-                    }
-                });
-            }
-        });
-    },
-    report: function(userId, args) {
-        if (!args[0]) {
-            return GlobalFn.PMUser(userId, 'Invalid request!', 'warning');
-        }
-        // Get sender's username
-        Player.findOne({
-            '_id': userId
-        }, function(err, result) {
-            if (err) {
-                return winston.error('Unable to save report: ' + userId + ': ' + args + ' ' + err)
-            }
-            // Save report to database
-            const NewReport = new Report();
-            NewReport.sentBy = result.name;
-            NewReport.message = args.join(' ');
-            NewReport.save(function(err) {
-                if (err) {
-                    return winston.error('Unable to save report: ' + userId + ': ' + args + ' ' + err)
-                    GlobalFn.PMUser(userId, 'Unable to save report, please try again or contact an admin.', 'error');
-                } else {
-                    GlobalFn.PMUser(userId, 'Successfully received the report, thank you!', 'success');
-                }
-            });
-        });
-    },
-    viewreports: function(userId, args) {
-        if (!args || isNaN(args)) {
-            Report.find({}).sort({createdAt: 'descending'}).limit(30).exec(function(err, result) {
-                if (err) {
-                    winston.error(err);
-                    GlobalFn.PMUser(userId, 'Database operation failed.', 'error');
-                } else {
-                    let reportMsg = '<center> <font color=#FFFF00> ::: Report History::: </font> </center> \n\n';
-                    for (let i = 0, len = result.length; i < len; i++) {
-                        reportMsg += '<font color=#00FFFF>' + _.capitalize(result[i].sentBy) + ': </font>';
-                        reportMsg += result[i].message.replace(/[^\x00-\x7F]/gmi, "") + '<font color=#00FFFF></font> - ' + moment(result[i].createdAt).fromNow() + '\n\n';
-                        reportMsg += '<img src=tdb://id:GFX_GUI_FRIENDLIST_SPLITTER>\n\n';
-                    }
-                    GlobalFn.PMUser(userId, GlobalFn.blob('Latest Reports', reportMsg));
-                }
-            });
-        } else {
-            Report.find({}).sort({createdAt: 'descending'}).limit(args[0]).exec(function(err, result) {
-                if (err) {
-                    winston.error(err);
-                    GlobalFn.PMUser(userId, 'Database operation failed.', 'error');
-                } else {
-                    let reportMsg = '<center> <font color=#FFFF00> ::: Report History::: </font> </center> \n\n';
-                    for (let i = 0, len = result.length; i < len; i++) {
-                        reportMsg += '<font color=#00FFFF>' + _.capitalize(result[i].sentBy) + ': </font>';
-                        reportMsg += result[i].message.replace(/[^\x00-\x7F]/gmi, "") + '<font color=#00FFFF></font> - ' + moment(result[i].createdAt).fromNow() + '\n\n';
-                        reportMsg += '<img src=tdb://id:GFX_GUI_FRIENDLIST_SPLITTER>\n\n';
-                    }
-                    GlobalFn.PMUser(userId, GlobalFn.blob('Latest Reports', reportMsg));
-                }
-            });
-        }
-    },
-    delreports: function(userId) {
-        Report.remove({}, function(err) {
-            if (err) {
-                return winston.error('Unable to clear reports: ' + err)
-                GlobalFn.PMUser(userId, 'Unable to clear reports.', 'error');
-            } else {
-                GlobalFn.PMUser(userId, 'Successfully cleared the reports!', 'success');
-            }
-        })
-    },
-    banorg: function(userId,orgName) {
-      if (!orgName) {
-        GlobalFn.PMUser(userId, 'An organization name is required!', 'warning');
-      } else {
-        addOrgBan = new OrgBanList();
-        addOrgBan.org_name = orgName.join(' ');
-        addOrgBan.by = userId;
-        addOrgBan.save(function(err){
-          if (err) {
-            winston.error('Unable to add org ban ' + err);
-            GlobalFn.PMUser(userId, 'Unable to add org ban!', 'error');
-          } else {
-            GlobalFn.PMUser(userId, 'Successfully banned ' + orgName.join(' '), 'success');
+            GlobalFn.PMUser(userId, 'Welcome to Darknet ' + result.name + ', you have been subscribed to all channels, please take a look at our ' + GlobalFn.blob('Rules', rules) + ' and ' + GlobalFn.blob('Help.', helpMsg));
           }
-        })
+        });
       }
-    },
-    unbanorg: function(userId, orgName) {
-      if (!orgName) {
-        GlobalFn.PMUser(userId, 'An organization name is required!', 'warning');
+    });
+  },
+  remadmin: function(userId, args) {
+    if (!args[0]) {
+      GlobalFn.PMUser(userId, 'Invalid request, use !delmember <player name>.', 'warning');
+    } else {
+      let userName = _.capitalize(args[0]);
+      Player.findOne({
+        'name': userName
+      }, function(err) {
+        if (err) {
+          winston.error(err);
+          GlobalFn.PMUser(userId, 'Database operation failed, try again.', 'error');
+        } else if (!result || result.accessLevel !== 2) {
+          GlobalFn.PMUser(userId, userName + ' is not an admin.', 'warning');
+        } else {
+          Player.updateOne({
+            'name': userName
+          }, {
+            'accessLevel': 1
+          }, function(err) {
+            if (err) {
+              winston.error(err);
+              GlobalFn.PMUser(userId, 'Database operation failed, try again.', 'error');
+            } else {
+              GlobalFn.PMUser(userId, userName + ' is no longer an admin.', 'success');
+            }
+          });
+        }
+      });
+    }
+  },
+  remmember: function(userId, args) {
+    if (!args[0]) {
+      GlobalFn.PMUser(userId, 'Invalid request, use !remmember <player name>.', 'warning');
+    } else {
+      let userName = _.capitalize(args[0]);
+      Player.findOne({
+        'name': userName
+      }, function(err, result) {
+        if (err) {
+          winston.error(err);
+          GlobalFn.PMUser(userId, 'Database operation failed, try again.', 'error');
+        } else if (!result || result.accessLevel < 1) {
+          GlobalFn.PMUser(userId, userName + ' is not member.', 'warning');
+        } else {
+          Player.updateOne({
+            'name': userName
+          }, {
+            'accessLevel': 0,
+            'generalChannel': false,
+            'lrChannel': false,
+            'wtbChannel': false,
+            'wtsChannel': false,
+            'pvmChannel': false
+          }, function(err) {
+            if (err) {
+              winston.error(err);
+              GlobalFn.PMUser(userId, 'Database operation failed, try again.', 'error');
+            } else {
+              if (result.buddyList === 'main') {
+                send_BUDDY_REMOVE(result._id);
+              } else {
+                GlobalFn.replicaBuddyList({buddyAction: 'rem', replica: result.buddyList, buddyId: result._id});
+              }
+              send_BUDDY_REMOVE(result._id);
+              GlobalFn.PMUser(userId, userName + ' is no longer a member.', 'success');
+            }
+          });
+        }
+      });
+    }
+  },
+  unregister: function(userId) {
+    Player.findOne({
+      '_id': userId
+    }, function(err, result) {
+      if (err) {
+        winston.error(err);
+      } else if (!result) { // this should not happen
+        winston.debug('Unable to find ' + userId);
+        GlobalFn.PMUser(userId, 'You are not a member!', 'warning');
+      } else if (result.accessLevel === 0) {
+        GlobalFn.PMUser(userId, 'You are not a member!', 'warning');
       } else {
-        OrgBanList.remove({org_name: orgName.join(' ')},(function(err){
+        Player.updateOne({
+          '_id': userId
+        }, {
+          'accessLevel': 0,
+          'generalChannel': false,
+          'lrChannel': false,
+          'wtbChannel': false,
+          'wtsChannel': false,
+          'pvmChannel': false
+        }, function(err) {
           if (err) {
-            winston.error('Unable to add org ban ' + err);
-            GlobalFn.PMUser(userId, 'Unable to add org ban!', 'error');
+            winston.error('Failed to unregister player: ' + err);
+            GlobalFn.PMUser(userId, 'Database operation failed, try again.', 'error');
           } else {
-            GlobalFn.PMUser(userId, 'Successfully unbanned ' + orgName.join(' '), 'success');
+            if (result.buddyList === 'main') {
+              send_BUDDY_REMOVE(userId);
+            } else {
+              GlobalFn.replicaBuddyList({buddyAction: 'rem', replica: result.buddyList, buddyId: userId});
+            }
+            GlobalFn.PMUser(userId, 'You are no longer a member and have been unsubscribed from all channels!', 'success');
           }
-        }))
+        });
       }
-    },
-    viewadmins: function(userId) {
-      Player.find({accessLevel: {$gte: 2}},function(err,result) {
+    });
+  },
+  subscribe: function(userId, args) {
+    if (!args[0]) {
+      GlobalFn.PMUser(userId, 'Invalid request, see help.', 'warning');
+    } else {
+      args[0] = args[0].toLowerCase();
+      if (ValidChannels.hasOwnProperty(args[0])) {
+        let update = {};
+        if (args[0] === 'all') {
+          update = {
+            'generalChannel': true,
+            'lrChannel': true,
+            'wtbChannel': true,
+            'wtsChannel': true,
+            'pvmChannel': true
+          };
+        } else {
+          update[ValidChannels[args[0]]] = true;
+        }
+        Player.updateOne({
+          '_id': userId
+        }, update, function(err) {
+          if (err) {
+            winston.error(err);
+            GlobalFn.PMUser(userId, 'Database operation failed, try again.', 'error');
+          } else {
+            GlobalFn.PMUser(userId, 'Successfully subscribed to  ' + args[0] + '.', 'success');
+          }
+        });
+      } else {
+        GlobalFn.PMUser(userId, 'Invalid channel name.Valid choices are: general,lr,wts,wtb.', 'warning');
+      }
+
+    }
+  },
+  unsubscribe: function(userId, args) {
+    if (!args[0]) {
+      GlobalFn.PMUser(userId, 'Invalid request, see help.', 'warning');
+    } else {
+      args[0] = args[0].toLowerCase();
+      if (ValidChannels.hasOwnProperty(args[0])) {
+        let update = {};
+        if (args[0] === 'all') {
+          update = {
+            'generalChannel': false,
+            'lrChannel': false,
+            'wtbChannel': false,
+            'wtsChannel': false,
+            'pvmChannel': false
+          };
+        } else {
+          update[ValidChannels[args[0]]] = false;
+        }
+        Player.updateOne({
+          '_id': userId
+        }, update, function(err) {
+          if (err) {
+            winston.error(err);
+            GlobalFn.PMUser(userId, 'Database operation failed, try again.', 'error');
+          } else {
+            GlobalFn.PMUser(userId, 'Successfully unsubscribed from ' + args[0] + '.', 'success');
+          }
+        });
+      } else {
+        GlobalFn.PMUser(userId, 'Invalid channel name.Valid choices are: general,lr,wts,wtb.', 'warning');
+      }
+
+    }
+  },
+  test: function(userId) {
+    //For testing purposes only, keep empty
+  },
+  addreplica: function(userId, args) {
+    addReplica = new Replica();
+    addReplica.username = args[0];
+    addReplica.password = args[1];
+    addReplica.replicaname = _.capitalize(args[2]);
+    if (args[3]) {
+      addReplica.dimension = args[3];
+    }
+    addReplica.save(function(err) {
+      if (err) {
+        winston.error(err);
+        GlobalFn.PMUser(userId, 'Unable to add new replica, see Log for details!', 'error');
+      } else {
+        GlobalFn.PMUser(userId, 'Successfully added a new replica!', 'success');
+      }
+    });
+  },
+  shutdown: function(userId) {
+    GlobalFn.die('Shutting down on user request');
+  },
+  invite: function(userId, args) {
+    let userName = args[0];
+    if (userName !== undefined) {
+      this.lookupUserName(userName).then(function(idResult) {
+        if (idResult !== -1) {
+          send_PRIVGRP_INVITE(idResult);
+          GlobalFn.PMUser(userId, 'Invited ' + userName + ' to this channel', 'success');
+        } else {
+          GlobalFn.PMUser(userId, 'Character ' + userName + ' does not exist.', 'warn');
+        }
+      });
+    } else {
+      send_PRIVGRP_INVITE(userId);
+    }
+  },
+  join: function(userId) {
+    send_PRIVGRP_INVITE(userId);
+  },
+  kick: function(userId, args) {
+    let userName = args[0];
+    if (userName !== undefined) {
+      this.lookupUserName(userName).then(function(idResult) {
+        if (idResult !== -1) {
+          Chat.findById(idResult).populate('_id').exec(function(err, result) {
+            if (err) {
+              winston.error(err);
+            } else if (result === null) {
+              GlobalFn.PMUser(userId, userName + ' is not on the channel.', 'warning');
+            } else {
+              send_PRIVGRP_KICK(idResult);
+              GlobalFn.PMUser(userId, 'Kicked ' + userName + ' from this channel.', 'success');
+            }
+          });
+        } else {
+          GlobalFn.PMUser(userId, 'Character ' + userName + ' does not exist.', 'warn');
+        }
+      });
+    } else {
+      send_PRIVGRP_KICK(userId);
+      GlobalFn.PMUser(userId, 'You\'ve left the channel.', 'success');
+    }
+  },
+  leave: function(userId) {
+    send_PRIVGRP_KICK(userId);
+    GlobalFn.PMUser(userId, 'You\'ve left the channel.', 'success');
+  },
+  set: function(userId, args) {
+    if (ValidSettings.hasOwnProperty(args[0]) || !args[1]) {
+      Settings.updateOne({}, {
+        [ValidSettings[args[0]]]: args[1]
+      }, function(err) {
         if (err) {
           winston.error(err);
         } else {
-          let adminListMsg = '<center> <font color=#FFFF00> ::: Darknet Admin List ::: </font> </center> \n\n';
-          for (let i = 0, len = result.length; i < len; i++) {
-              adminListMsg += 'Name: <font color=#00FFFF>' + result[i].name + ' </font>\n';
-              adminListMsg += 'Access Level: <font color=#00FFFF>' + result[i].accessLevel + ' </font>\n';
-              adminListMsg += '<img src=tdb://id:GFX_GUI_FRIENDLIST_SPLITTER>\n\n';
-          }
-          GlobalFn.PMUser(userId, GlobalFn.blob('Darknet Admin List', adminListMsg));
+          GlobalFn.loadSettings();
+          GlobalFn.PMUser(userId, 'Settings successfully updated', 'success');
         }
-      })
+      });
+    } else {
+      GlobalFn.PMUser(userId, 'Invalid setting!', 'error');
     }
+  },
+  autoinvite: function(userId, args) {
+    if (!args[0]) {
+      Player.findOne({
+        '_id': userId
+      }, function(err, result) {
+        if (err) {
+          winston.error(err);
+        } else {
+          GlobalFn.PMUser(userId, 'Autoinvite is set to: ' + result.autoinvite, 'success');
+        }
+      });
+    } else if (args[0].toLowerCase() === 'on' || args[0].toLowerCase() === 'off') {
+      if (args[0].toLowerCase() === 'on') {
+        Player.updateOne({
+          '_id': userId
+        }, {
+          autoinvite: true
+        }, function(err) {
+          if (err) {
+            winston.error(err);
+          } else {
+            GlobalFn.PMUser(userId, 'Autoinvite successfully updated!');
+          }
+        });
+      } else {
+        Player.updateOne({
+          '_id': userId
+        }, {
+          autoinvite: false
+        }, function(err) {
+          if (err) {
+            winston.error(err);
+          } else {
+            GlobalFn.PMUser(userId, 'Autoinvite successfully updated!');
+          }
+        });
+      }
+    } else {
+      GlobalFn.PMUser(userId, 'Invalid setting!', 'error');
+    }
+  },
+  history: function(userId, args) {
+    if (!args[0]) {
+      History.find().sort({createdAt: 'descending'}).limit(20).exec(function(err, result) {
+        if (err) {
+          winston.error(err);
+        } else {
+          let historyMsg = '<center> <font color=#FFFF00> :::Darknet History::: </font> </center> \n\n';
+          for (let i = 0, len = result.length; i < len; i++) {
+            historyMsg += '<font color=#00FFFF>' + _.capitalize(result[i].channel) + ': </font>';
+            historyMsg += result[i].message + '<font color=#00FFFF> [' + result[i].name + ']</font> - ' + moment(result[i].createdAt).fromNow() + '\n';
+            historyMsg += '<img src=tdb://id:GFX_GUI_FRIENDLIST_SPLITTER>\n\n';
+          }
+          GlobalFn.PMUser(userId, GlobalFn.blob('History', historyMsg));
+        }
+      });
+    } else if (args[0].toLowerCase() === 'wts' || args[0].toLowerCase() === 'wtb' || args[0].toLowerCase() === 'general' || args[0].toLowerCase() === 'pvm' || args[0].toLowerCase() === 'lr') {
+      History.find({channel: args[0].toLowerCase()}).sort({createdAt: 'descending'}).limit(20).exec(function(err, result) {
+        if (err) {
+          winston.error(err);
+        } else {
+          let historyMsg = '<center> <font color=#FFFF00> :::Darknet History::: </font> </center> \n\n';
+          for (let i = 0, len = result.length; i < len; i++) {
+            historyMsg += '<font color=#00FFFF>' + _.capitalize(result[i].channel) + ': </font>';
+            historyMsg += result[i].message.replace(/[^\x00-\x7F]/gmi, '') + '<font color=#00FFFF> [' + result[i].name + ']</font> - ' + moment(result[i].createdAt).fromNow() + '\n\n';
+            historyMsg += '<img src=tdb://id:GFX_GUI_FRIENDLIST_SPLITTER>\n\n';
+          }
+          GlobalFn.PMUser(userId, GlobalFn.blob('History', historyMsg));
+        }
+      });
+    } else {
+      GlobalFn.PMUser(userId, 'Invalid channel selected.', 'warning');
+    }
+  },
+  replicastatus: function(userId) {
+    Replica.find({}, function(err, result) {
+      let repStatus = '<center> <font color=#FFFF00> :::Darknet Replicas Status::: </font> </center> \n\n';
+      for (let i = 0, len = result.length; i < len; i++) {
+        repStatus += '<img src=tdb://id:GFX_GUI_FRIENDLIST_SPLITTER>\n';
+        repStatus += '<font color=#00FFFF>Name: </font>' + result[i].replicaname + '\n';
+        if (result[i].ready) {
+          repStatus += '<font color=#00FFFF>Busy: </font> <font color=#00FF00>No </font>\n';
+        } else {
+          repStatus += '<font color=#00FFFF>Busy: </font> <font color=#FF0000>Yes </font>\n';
+        }
+        repStatus += '<img src=tdb://id:GFX_GUI_FRIENDLIST_SPLITTER>\n\n';
+      }
+      GlobalFn.PMUser(userId, GlobalFn.blob('Replicas Status', repStatus));
+    });
+  },
+  ignore: function(userId, args) {
+    if (!args[0]) {
+      GlobalFn.PMUser(userId, 'Invalid request, see !help ignore.', 'warning');
+    } else {
+      let userName = _.capitalize(args[0]);
+      Player.findOne({
+        'name': userName
+      }, function(err, result) {
+        if (err) {
+          winston.error(err);
+          GlobalFn.PMUser(userId, 'Database operation failed.', 'error');
+        } else if (result === null) {
+          GlobalFn.PMUser(userId, 'Specified player is not a member.', 'warning');
+        } else {
+          Player.findOneAndUpdate({
+            '_id': userId
+          }, {
+            $addToSet: {
+              'ignorelist': result._id
+            }
+          }, function(err) {
+            if (err) {
+              winston.error(err);
+              GlobalFn.PMUser(userId, 'Database operation failed.', 'error');
+            } else {
+              GlobalFn.PMUser(userId, 'Added ' + userName + ' to ignore list.', 'success');
+            }
+          });
+        }
+      });
+    }
+  },
+  unignore: function(userId, args) {
+    if (!args[0]) {
+      GlobalFn.PMUser(userId, 'Invalid request, see !help unignore.', 'warning');
+    } else {
+      let userName = _.capitalize(args[0]);
+      Player.findOne({
+        'name': userName
+      }, function(err, result) {
+        if (err) {
+          winston.error(err);
+          GlobalFn.PMUser(userId, 'Database operation failed.', 'error');
+        } else if (result === null) {
+          GlobalFn.PMUser(userId, 'Specified player is not a member.', 'warning');
+        } else {
+          Player.findOneAndUpdate({
+            '_id': userId
+          }, {
+            $pull: {
+              'ignorelist': result._id
+            }
+          }, function(err) {
+            if (err) {
+              winston.error(err);
+              GlobalFn.PMUser(userId, 'Database operation failed.', 'error');
+            } else {
+              GlobalFn.PMUser(userId, 'Removed ' + userName + ' from ignore list.', 'success');
+            }
+          });
+        }
+      });
+    }
+  },
+  playerhistory: function(userId, args) {
+    if (!args[0]) {
+      //If no arguments provided display braodcast history of sender.
+      Player.findOne({
+        '_id': userId
+      }, function(err, playerInfo) {
+        if (err) {
+          winston.error(err);
+        } else {
+          History.find({'name': playerInfo.name}).sort({createdAt: 'descending'}).limit(20).exec(function(err, result) {
+            if (err) {
+              winston.error(err);
+              GlobalFn.PMUser(userId, 'Database operation failed.', 'error');
+            } else {
+              let historyMsg = '<center> <font color=#FFFF00> :::' + playerInfo.name + '\'s Broadcast History::: </font> </center> \n\n';
+              for (let i = 0, len = result.length; i < len; i++) {
+                historyMsg += '<font color=#00FFFF>' + _.capitalize(result[i].channel) + ': </font>';
+                historyMsg += result[i].message.replace(/[^\x00-\x7F]/gmi, '') + '<font color=#00FFFF> [' + result[i].name + ']</font> - ' + moment(result[i].createdAt).fromNow() + '\n\n';
+                historyMsg += '<img src=tdb://id:GFX_GUI_FRIENDLIST_SPLITTER>\n\n';
+              }
+              GlobalFn.PMUser(userId, GlobalFn.blob(playerInfo.name + '\'s History', historyMsg));
+            }
+          });
+        }
+
+      });
+    } else {
+      let userName = _.capitalize(args[0]);
+      History.find({'name': userName}).sort({createdAt: 'descending'}).limit(30).exec(function(err, result) {
+        if (err) {
+          winston.error(err);
+          GlobalFn.PMUser(userId, 'Database operation failed.', 'error');
+        } else {
+          let historyMsg = '<center> <font color=#FFFF00> :::' + userName + '\'s Broadcast History::: </font> </center> \n\n';
+          for (let i = 0, len = result.length; i < len; i++) {
+            historyMsg += '<font color=#00FFFF>' + _.capitalize(result[i].channel) + ': </font>';
+            historyMsg += result[i].message.replace(/[^\x00-\x7F]/gmi, '') + '<font color=#00FFFF> [' + result[i].name + ']</font> - ' + moment(result[i].createdAt).fromNow() + '\n\n';
+            historyMsg += '<img src=tdb://id:GFX_GUI_FRIENDLIST_SPLITTER>\n\n';
+          }
+          GlobalFn.PMUser(userId, GlobalFn.blob(userName + '\'s History', historyMsg));
+        }
+      });
+    }
+  },
+  admins: function(userId) {
+    GlobalFn.PMUser(userId, 'My master is [<a href="user://Wafflespower">Wafflespower</a>], feel free to contact him for any Darknet issues, suggestions or just general feedback.');
+  },
+  lastseen: function(userId, args) {
+    if (!args[0]) {
+      GlobalFn.PMUser(userId, 'Invalid request.', 'warning');
+    } else {
+      let userName = _.capitalize(args[0]);
+      // Check if player is in database.
+      Player.findOne({
+        'name': userName
+      }, function(err, player) {
+        if (err) {
+          winston.error(err);
+          GlobalFn.PMUser(userId, 'Database operation failed.', 'error');
+        } else {
+          if (!player) {
+            GlobalFn.PMUser(userId, 'I have never seen <font color=#FF0000>' + userName + '</font>!', 'warning');
+          } else {
+            // Check if player is online.
+            Online.findOne({
+              '_id': player._id
+            }, function(err, result) {
+              if (err) {
+                winston.error(err);
+                GlobalFn.PMUser(userId, 'Database operation failed.', 'error');
+              } else {
+                // If player is NOT online.
+                if (result === null) {
+                  GlobalFn.PMUser(userId, 'Player <font color=#FF0000>' + userName + '</font> Was last seen on ' + player.lastseen + ' about  <font color=#FF0000>' + moment(player.lastseen).fromNow() + '</font>!');
+                } else {
+                  // If PLayer is online.
+                  GlobalFn.PMUser(userId, 'Player <font color=#FF0000>' + userName + '</font> is <font color=#00FF00>Online</font> now!' + ' Logged on at ' + result.createdAt + ' about <font color=#FF0000>' + moment(result.createdAt).fromNow() + '</font>!');
+                }
+              }
+            });
+          }
+        }
+      });
+    }
+  },
+  addwarning: function(userId, args) {
+    if (!args[0]) {
+      return GlobalFn.PMUser(userId, 'Invalid request!', 'warning');
+    }
+    let userName = _.capitalize(args[0]);
+    Player.findOne({
+      'name': userName
+    }, function(err, result) {
+      if (err) {
+        winston.error(err);
+      } else {
+        if (result === null) {
+          GlobalFn.PMUser(userId, userName + ' is not a member.', 'warning');
+        } else if (result.warnings + 1 >= GlobalFn.maxWarnings) {
+          Player.updateOne({
+            'name': userName
+          }, {
+            'banned': true,
+            'generalChannel': false,
+            'lrChannel': false,
+            'wtbChannel': false,
+            'wtsChannel': false,
+            'pvmChannel': false
+          }, function(err) {
+            if (err) {
+              winston.error(err);
+            } else {
+              GlobalFn.PMUser(userId, userName + ' has reached the maximum amount of warnings and has been banned!', 'success');
+            }
+          });
+        } else {
+          Player.findOneAndUpdate({
+            'name': userName
+          }, {
+            $inc: {
+              'warnings': 1
+            }
+          }, function(err) {
+            if (err) {
+              winston.error(err);
+            } else {
+              GlobalFn.PMUser(result._id, 'A warning has been added to your account, you now have ' + (result.warnings + 1) + ' warning(s)!', 'warning');
+              GlobalFn.PMUser(userId, 'A warning has been added to ' + userName + ' \'s account. ', 'success');
+            }
+          });
+        }
+      }
+    });
+  },
+  remwarning: function(userId, args) {
+    if (!args[0]) {
+      return GlobalFn.PMUser(userId, 'Invalid request!', 'warning');
+    }
+    let userName = _.capitalize(args[0]);
+    Player.findOne({
+      'name': userName
+    }, function(err, result) {
+      if (result === null) {
+        GlobalFn.PMUser(userId, 'Player not found!', 'warning');
+      } else if (result.warnings <= 0) {
+        GlobalFn.PMUser(userId, 'Player has no warnings!', 'warning');
+      } else {
+        Player.updateOne({
+          'name': userName
+        }, {
+          $inc: {
+            'warnings': -1
+          }
+        }, function(err) {
+          if (err) {
+            winston.error(err);
+          } else {
+            GlobalFn.PMUser(userId, 'One warning was removed from ' + userName + '\'s account.', 'success');
+          }
+        });
+      }
+    });
+  },
+  report: function(userId, args) {
+    if (!args[0]) {
+      return GlobalFn.PMUser(userId, 'Invalid request!', 'warning');
+    }
+    // Get sender's username
+    Player.findOne({
+      '_id': userId
+    }, function(err, result) {
+      if (err) {
+        return winston.error('Unable to save report: ' + userId + ': ' + args + ' ' + err);
+      }
+      // Save report to database
+      const NewReport = new Report();
+      NewReport.sentBy = result.name;
+      NewReport.message = args.join(' ');
+      NewReport.save(function(err) {
+        if (err) {
+          GlobalFn.PMUser(userId, 'Unable to save report, please try again or contact an admin.', 'error');
+          return winston.error('Unable to save report: ' + userId + ': ' + args + ' ' + err);
+        } else {
+          GlobalFn.PMUser(userId, 'Successfully received the report, thank you!', 'success');
+        }
+      });
+    });
+  },
+  viewreports: function(userId, args) {
+    if (!args || isNaN(args)) {
+      Report.find({}).sort({createdAt: 'descending'}).limit(30).exec(function(err, result) {
+        if (err) {
+          winston.error(err);
+          GlobalFn.PMUser(userId, 'Database operation failed.', 'error');
+        } else {
+          let reportMsg = '<center> <font color=#FFFF00> ::: Report History::: </font> </center> \n\n';
+          for (let i = 0, len = result.length; i < len; i++) {
+            reportMsg += '<font color=#00FFFF>' + _.capitalize(result[i].sentBy) + ': </font>';
+            reportMsg += result[i].message.replace(/[^\x00-\x7F]/gmi, '') + '<font color=#00FFFF></font> - ' + moment(result[i].createdAt).fromNow() + '\n\n';
+            reportMsg += '<img src=tdb://id:GFX_GUI_FRIENDLIST_SPLITTER>\n\n';
+          }
+          GlobalFn.PMUser(userId, GlobalFn.blob('Latest Reports', reportMsg));
+        }
+      });
+    } else {
+      Report.find({}).sort({createdAt: 'descending'}).limit(args[0]).exec(function(err, result) {
+        if (err) {
+          winston.error(err);
+          GlobalFn.PMUser(userId, 'Database operation failed.', 'error');
+        } else {
+          let reportMsg = '<center> <font color=#FFFF00> ::: Report History::: </font> </center> \n\n';
+          for (let i = 0, len = result.length; i < len; i++) {
+            reportMsg += '<font color=#00FFFF>' + _.capitalize(result[i].sentBy) + ': </font>';
+            reportMsg += result[i].message.replace(/[^\x00-\x7F]/gmi, '') + '<font color=#00FFFF></font> - ' + moment(result[i].createdAt).fromNow() + '\n\n';
+            reportMsg += '<img src=tdb://id:GFX_GUI_FRIENDLIST_SPLITTER>\n\n';
+          }
+          GlobalFn.PMUser(userId, GlobalFn.blob('Latest Reports', reportMsg));
+        }
+      });
+    }
+  },
+  delreports: function(userId) {
+    Report.remove({}, function(err) {
+      if (err) {
+        GlobalFn.PMUser(userId, 'Unable to clear reports.', 'error');
+        return winston.error('Unable to clear reports: ' + err);
+      } else {
+        GlobalFn.PMUser(userId, 'Successfully cleared the reports!', 'success');
+      }
+    });
+  },
+  banorg: function(userId, orgName) {
+    if (!orgName) {
+      GlobalFn.PMUser(userId, 'An organization name is required!', 'warning');
+    } else {
+      addOrgBan = new OrgBanList();
+      addOrgBan.org_name = orgName.join(' ');
+      addOrgBan.by = userId;
+      addOrgBan.save(function(err) {
+        if (err) {
+          winston.error('Unable to add org ban ' + err);
+          GlobalFn.PMUser(userId, 'Unable to add org ban!', 'error');
+        } else {
+          GlobalFn.PMUser(userId, 'Successfully banned ' + orgName.join(' '), 'success');
+        }
+      });
+    }
+  },
+  unbanorg: function(userId, orgName) {
+    if (!orgName) {
+      GlobalFn.PMUser(userId, 'An organization name is required!', 'warning');
+    } else {
+      OrgBanList.remove({
+        org_name: orgName.join(' ')
+      }, (function(err) {
+        if (err) {
+          winston.error('Unable to add org ban ' + err);
+          GlobalFn.PMUser(userId, 'Unable to add org ban!', 'error');
+        } else {
+          GlobalFn.PMUser(userId, 'Successfully unbanned ' + orgName.join(' '), 'success');
+        }
+      }));
+    }
+  },
+  viewadmins: function(userId) {
+    Player.find({
+      accessLevel: {
+        $gte: 2
+      }
+    }, function(err, result) {
+      if (err) {
+        winston.error(err);
+      } else {
+        let adminListMsg = '<center> <font color=#FFFF00> ::: Darknet Admin List ::: </font> </center> \n\n';
+        for (let i = 0, len = result.length; i < len; i++) {
+          adminListMsg += 'Name: <font color=#00FFFF>' + result[i].name + ' </font>\n';
+          adminListMsg += 'Access Level: <font color=#00FFFF>' + result[i].accessLevel + ' </font>\n';
+          adminListMsg += '<img src=tdb://id:GFX_GUI_FRIENDLIST_SPLITTER>\n\n';
+        }
+        GlobalFn.PMUser(userId, GlobalFn.blob('Darknet Admin List', adminListMsg));
+      }
+    });
+  }
 };
 
 const ValidSettings = {
-    cmdprefix: 'cmdPrefix',
-    pmcolor: 'defaultPMColor',
-    successpmcolor: 'successPMColor',
-    warnpmcolor: 'warnPMColor',
-    errpmcolor: 'errPMColor',
-    chatcolor: 'defaultChatColor',
-    successchatcolor: 'successChatColor',
-    warnchatcolor: 'warnChatColor',
-    errchatcolor: 'errChatColor',
-    minlevel: 'minLevel',
-    maxwarnings: 'maxWarnings',
-    generallock: 'generalLockDuration',
-    wtslock: 'wtsLockDuration',
-    wtblock: 'wtbLockDuration',
-    lrlock: 'lrLockDuration',
-    pvmlock: 'pvmLockDuration'
+  cmdprefix: 'cmdPrefix',
+  pmcolor: 'defaultPMColor',
+  successpmcolor: 'successPMColor',
+  warnpmcolor: 'warnPMColor',
+  errpmcolor: 'errPMColor',
+  chatcolor: 'defaultChatColor',
+  successchatcolor: 'successChatColor',
+  warnchatcolor: 'warnChatColor',
+  errchatcolor: 'errChatColor',
+  minlevel: 'minLevel',
+  maxwarnings: 'maxWarnings',
+  generallock: 'generalLockDuration',
+  wtslock: 'wtsLockDuration',
+  wtblock: 'wtbLockDuration',
+  lrlock: 'lrLockDuration',
+  pvmlock: 'pvmLockDuration'
 };
 
 var about = '<center> <font color=#FFFF00> :::Nephbot - Darknet::: </font> </center> \n\n';
